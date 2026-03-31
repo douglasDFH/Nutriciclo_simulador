@@ -208,9 +208,9 @@ export function ProductionPanel() {
                 {/* indicador subproceso */}
                 {item.subProcess && (
                   <span className="ml-1">
-                    {item.subProcess === 'hueso'  && <CheckCircle  className="w-3 h-3 text-green-400" title="Subproceso modelado" />}
-                    {item.subProcess === 'sangre' && <AlertTriangle className="w-3 h-3 text-yellow-400" title="Subproceso parcial" />}
-                    {item.subProcess === 'bsf'    && <XCircle      className="w-3 h-3 text-red-400"    title="Subproceso faltante" />}
+                    {item.subProcess === 'hueso'  && <span title="Subproceso modelado"><CheckCircle   className="w-3 h-3 text-green-400" /></span>}
+                    {item.subProcess === 'sangre' && <span title="Subproceso completo"><CheckCircle   className="w-3 h-3 text-green-400" /></span>}
+                    {item.subProcess === 'bsf'    && <span title="Subproceso BSF completo"><CheckCircle className="w-3 h-3 text-green-400" /></span>}
                   </span>
                 )}
               </div>
