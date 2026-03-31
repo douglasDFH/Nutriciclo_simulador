@@ -73,6 +73,23 @@ const INITIAL_EQUIPMENT: Record<EquipmentId, Equipment> = {
     specs: { capacity: '500–3000 kg/lote', power: '37 kW', material: 'AISI-304 + revestimiento epoxi', notes: 'Doble espiral inversa. Tiempo de mezcla 10–15 min. Mezcla húmeda homogénea de melaza con urea y sal mineralizada.' },
   },
 
+  // ── SUB-PROCESO BSF ─────────────────────────────────────────────────────
+  bsf_bioreactor: {
+    id: 'bsf_bioreactor', name: 'Biorreactor de Cría BSF', phase: 'subproc', status: 'inactive', active: false,
+    model: 'BioBox BSF-500', manufacturer: 'AgriProtein / Enterra Feed',
+    specs: { capacity: '500 kg larvas/ciclo', power: '3 kW', material: 'HDPE + malla inox.', tempRange: '27–30 °C', notes: 'Módulo de cría Hermetia illucens. Ciclo 14 días. Sustrato: residuos orgánicos locales. Temperatura óptima 27–30°C. Humedad relativa 70–80%.' },
+  },
+  bsf_dryer: {
+    id: 'bsf_dryer', name: 'Secador de Larvas BSF', phase: 'subproc', status: 'inactive', active: false,
+    model: 'SD-100 BSF', manufacturer: 'Vulcanotec / Entomo Farms',
+    specs: { capacity: '100 kg/h larvas frescas', power: '8 kW', material: 'AISI-304', tempRange: '70–90 °C', notes: 'Secado de larvas frescas BSF a 70–90°C por 2 h. Reduce humedad de 65% a <10% para molienda. Sistema de bandejas rotativas.' },
+  },
+  bsf_mill: {
+    id: 'bsf_mill', name: 'Molino de Larvas Secas (BSF)', phase: 'subproc', status: 'inactive', active: false,
+    model: 'BSF-Mill 500', manufacturer: 'RICHI / Bühler',
+    specs: { capacity: '0.5–1 t/h', power: '15 kW', material: 'AISI-304', notes: 'Molienda de larvas secas BSF. Criba 1.5 mm. Produce harina BSF con 40–45% proteína cruda. Exclusivo para larvas (sin mezcla con otros materiales).' },
+  },
+
   // ── FASE 3 ──────────────────────────────────────────────────────────────
   paddle_mixer: {
     id: 'paddle_mixer', name: 'Mezcladora Paletas Doble Eje', phase: 'phase3', status: 'inactive', active: false,
@@ -109,6 +126,8 @@ const INITIAL_SENSORS = {
   exothermicTemp: 25,
   mixViscosity: 100,
   productionRate: 0,
+  bloodFlourRate: 0,
+  bsfFlourRate: 0,
 }
 
 const INITIAL_PLAN: ProductionPlan = {

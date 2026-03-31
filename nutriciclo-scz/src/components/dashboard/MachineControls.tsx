@@ -6,9 +6,10 @@ import { Power, ChevronDown, ChevronUp, Zap, Package, Thermometer, Info } from '
 import { clsx } from 'clsx'
 
 const PHASE_COLORS = {
-  phase1: { border: 'border-red-800', bg: 'bg-red-950/30', title: 'text-red-400', label: 'FASE 1 — Preparación Intensiva' },
-  phase2: { border: 'border-blue-800', bg: 'bg-blue-950/30', title: 'text-blue-400', label: 'FASE 2 — Mezcla Húmeda' },
-  phase3: { border: 'border-green-800', bg: 'bg-green-950/30', title: 'text-green-400', label: 'FASE 3 — Fraguado' },
+  phase1:  { border: 'border-red-800',    bg: 'bg-red-950/30',    title: 'text-red-400',    label: 'FASE 1 — Preparación Intensiva' },
+  phase2:  { border: 'border-blue-800',   bg: 'bg-blue-950/30',   title: 'text-blue-400',   label: 'FASE 2 — Mezcla Húmeda' },
+  phase3:  { border: 'border-green-800',  bg: 'bg-green-950/30',  title: 'text-green-400',  label: 'FASE 3 — Fraguado' },
+  subproc: { border: 'border-lime-800',   bg: 'bg-lime-950/30',   title: 'text-lime-400',   label: 'SUB-PROCESO — Harina BSF (Hermetia illucens)' },
 }
 
 function EquipmentCard({ eq }: { eq: Equipment }) {
@@ -97,7 +98,7 @@ export function MachineControls() {
   const { equipment, sensors } = useSimulatorStore()
 
   const equipmentList = Object.values(equipment)
-  const phases = ['phase1', 'phase2', 'phase3'] as const
+  const phases = ['phase1', 'phase2', 'phase3', 'subproc'] as const
 
   return (
     <div className="p-3 space-y-3">
@@ -117,7 +118,7 @@ export function MachineControls() {
       })}
 
       {/* Live sensor summary */}
-      <div className="grid grid-cols-3 gap-2 pt-1">
+      <div className="grid grid-cols-4 gap-2 pt-1">
         {[
           { label: 'Horno',    value: `${sensors.kilnTemp.toFixed(0)}°C`,            color: 'text-orange-400' },
           { label: 'Secador',  value: `${sensors.dryerTemp.toFixed(0)}°C`,            color: 'text-amber-400' },
@@ -125,6 +126,8 @@ export function MachineControls() {
           { label: 'Melaza',   value: `${sensors.molassesFlowActual.toFixed(1)} L/h`, color: 'text-yellow-400' },
           { label: 'Exotérm.', value: `${sensors.exothermicTemp.toFixed(0)}°C`,       color: 'text-purple-400' },
           { label: 'Produc.',  value: `${sensors.productionRate.toFixed(0)} kg/h`,    color: 'text-green-400' },
+          { label: 'H.Sangre', value: `${sensors.bloodFlourRate.toFixed(0)} kg/h`,   color: 'text-red-400' },
+          { label: 'H.BSF',    value: `${sensors.bsfFlourRate.toFixed(0)} kg/h`,     color: 'text-lime-400' },
         ].map((s) => (
           <div key={s.label} className="bg-gray-800/60 rounded p-2 text-center">
             <div className="text-gray-500 text-xs">{s.label}</div>

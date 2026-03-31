@@ -1,4 +1,4 @@
-export type PhaseId = 'phase1' | 'phase2' | 'phase3'
+export type PhaseId = 'phase1' | 'phase2' | 'phase3' | 'subproc'
 
 export type EquipmentId =
   // Fase 1 — Preparación Intensiva
@@ -19,6 +19,10 @@ export type EquipmentId =
   | 'vibrating_table'
   | 'belt_conveyor'
   | 'ventilation'
+  // Sub-proceso — Harina BSF (Hermetia illucens)
+  | 'bsf_bioreactor'
+  | 'bsf_dryer'
+  | 'bsf_mill'
 
 export type EquipmentStatus = 'inactive' | 'active' | 'warning' | 'error'
 
@@ -57,6 +61,8 @@ export interface SensorReadings {
   exothermicTemp: number        // °C
   mixViscosity: number          // cP
   productionRate: number        // kg/h
+  bloodFlourRate: number        // kg/h — harina de sangre producida
+  bsfFlourRate: number          // kg/h — harina BSF producida
 }
 
 export interface Alert {

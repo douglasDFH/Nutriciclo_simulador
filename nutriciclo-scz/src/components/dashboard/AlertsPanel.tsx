@@ -50,6 +50,8 @@ export function AlertsPanel() {
       `Temp. Exotérmica: ${sensors.exothermicTemp.toFixed(1)} °C`,
       `Viscosidad Mezcla: ${sensors.mixViscosity.toFixed(0)} cP`,
       `Tasa de Producción: ${sensors.productionRate.toFixed(1)} kg/h`,
+      `Harina de Sangre: ${sensors.bloodFlourRate.toFixed(1)} kg/h`,
+      `Harina BSF: ${sensors.bsfFlourRate.toFixed(1)} kg/h`,
       '',
       '--- PLAN DE PRODUCCIÓN ---',
       `Objetivo: ${productionPlan.targetBlocks} bloques × ${productionPlan.blockWeightKg} kg`,

@@ -19,22 +19,22 @@ const SUB_PROCESSES = [
   {
     key: 'sangre',
     label: 'Harina de Sangre',
-    status: 'partial' as const,
+    status: 'ok' as const,
     equipment: 'Marmita Jersa MV-300 → Secador Vulcanotec SD-500 → Molino RICHI 9FQ',
-    desc: 'Equipos presentes en el simulador pero sin flujo dedicado ni sensor de harina producida. Subproceso parcialmente modelado.',
-    color: 'text-yellow-400',
-    border: 'border-yellow-800',
-    bg: 'bg-yellow-950/20',
+    desc: 'Flujo dedicado modelado (ruta directa Marmita→Secador→Molino, separada de la ruta de huesos). Sensor bloodFlourRate activo ~75 kg/h cuando los 3 equipos están encendidos.',
+    color: 'text-green-400',
+    border: 'border-green-800',
+    bg: 'bg-green-950/20',
   },
   {
     key: 'bsf',
     label: 'Harina BSF (Larvas Mosca Soldado Negra)',
-    status: 'missing' as const,
-    equipment: 'Ninguno — subproceso no implementado',
-    desc: 'El procesamiento de larvas BSF (cría, sacrificio, secado y molienda) NO existe en el simulador. Requiere equipos adicionales: biorreactor de cría BSF, secador de larvas y molino dedicado.',
-    color: 'text-red-400',
-    border: 'border-red-800',
-    bg: 'bg-red-950/20',
+    status: 'ok' as const,
+    equipment: 'Biorreactor AgriProtein BioBox BSF-500 → Secador Vulcanotec SD-100 BSF → Molino RICHI BSF-Mill 500',
+    desc: 'Sub-proceso completo implementado. 3 equipos dedicados (fase SUB-PROC). Flujos de partículas desde z=-8 (detrás de línea principal) hasta la mezcladora. Sensor bsfFlourRate activo ~40 kg/h. 40–45% proteína cruda.',
+    color: 'text-green-400',
+    border: 'border-green-800',
+    bg: 'bg-green-950/20',
   },
 ]
 
@@ -46,7 +46,7 @@ const STATUS_ICON = {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export function ProductionPanel() {
-  const { productionPlan, blocksProduced, sensors, running, setProductionPlan } = useSimulatorStore()
+  const { productionPlan, blocksProduced, sensors, running, setProductionPlan, equipment } = useSimulatorStore()
   const [inputBlocks, setInputBlocks] = useState(String(productionPlan.targetBlocks))
 
   const { targetBlocks, blockWeightKg } = productionPlan
@@ -140,6 +140,36 @@ export function ProductionPanel() {
             value={`${(blocksProduced * blockWeightKg).toFixed(0)} kg`}
             color="text-green-400"
           />
+        </div>
+
+        {/* Harinas sub-proceso */}
+        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-700">
+          <div className="bg-red-950/30 border border-red-800 rounded p-2 text-center">
+            <div className="text-xs text-red-400 font-semibold">Harina de Sangre</div>
+            <div className="font-mono text-sm font-bold text-red-300">
+              {sensors.bloodFlourRate > 0
+                ? `${sensors.bloodFlourRate.toFixed(1)} kg/h`
+                : <span className="text-gray-600">Equipos OFF</span>}
+            </div>
+            <div className="text-xs text-gray-600">
+              {equipment.marmita.active && equipment.rotary_dryer.active && equipment.hammer_mill.active
+                ? '● Marmita + Secador + Molino'
+                : 'Requiere: Marmita + Secador + Molino'}
+            </div>
+          </div>
+          <div className="bg-lime-950/30 border border-lime-800 rounded p-2 text-center">
+            <div className="text-xs text-lime-400 font-semibold">Harina BSF</div>
+            <div className="font-mono text-sm font-bold text-lime-300">
+              {sensors.bsfFlourRate > 0
+                ? `${sensors.bsfFlourRate.toFixed(1)} kg/h`
+                : <span className="text-gray-600">Equipos OFF</span>}
+            </div>
+            <div className="text-xs text-gray-600">
+              {equipment.bsf_bioreactor.active && equipment.bsf_dryer.active && equipment.bsf_mill.active
+                ? '● Biorreactor + Secador + Molino BSF'
+                : 'Requiere: Biorreactor + Sec. + Molino BSF'}
+            </div>
+          </div>
         </div>
       </section>
 

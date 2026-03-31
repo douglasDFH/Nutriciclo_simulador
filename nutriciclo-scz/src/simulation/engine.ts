@@ -8,7 +8,7 @@ export function calcKilnTemp(current: number, target: number, active: boolean, d
 }
 
 export function calcDryerTemp(current: number, active: boolean, dt = 1): number {
-  const targetTemp = active ? 100 : 25   // 80–120°C, nominal 100°C
+  const targetTemp = active ? 100 : 25
   const inertia = 0.08 * dt
   const noise = (Math.random() - 0.5) * 3
   return Math.max(25, current + (targetTemp - current) * inertia + noise)
@@ -48,15 +48,43 @@ export function calcMolassesFlow(current: number, target: number, pumpActive: bo
   return Math.max(0, current + (targetFlow - current) * lag + noise)
 }
 
+/**
+ * Harina de Sangre: producida cuando Marmita + Secador + Molino están activos.
+ * Rendimiento ~80 kg/h base (sangre fresca → cocción → secado → molienda).
+ */
+export function calcBloodFlourRate(
+  marmitaActive: boolean,
+  dryerActive: boolean,
+  millActive: boolean
+): number {
+  if (!marmitaActive || !dryerActive || !millActive) return 0
+  const base = 75 + (Math.random() - 0.5) * 10
+  return Math.max(0, base)
+}
+
+/**
+ * Harina BSF: producida cuando Biorreactor + Secador BSF + Molino BSF están activos.
+ * Rendimiento ~40 kg/h (larvas frescas → secado 70-90°C → molienda → 40-45% proteína).
+ */
+export function calcBSFFlourRate(
+  bioreactorActive: boolean,
+  bsfDryerActive: boolean,
+  bsfMillActive: boolean
+): number {
+  if (!bioreactorActive || !bsfDryerActive || !bsfMillActive) return 0
+  const base = 38 + (Math.random() - 0.5) * 6
+  return Math.max(0, base)
+}
+
 export function calcProductionRate(params: SimulationParameters, activeCount: number): number {
   if (activeCount === 0) return 0
-  const base = 50 + (activeCount / 15) * 250
-  const tempBonus = params.calcinationTemp > 500 ? 20 : 0
+  const base = 50 + (activeCount / 18) * 250
+  const tempBonus    = params.calcinationTemp > 500 ? 20 : 0
   const molassesBonus = params.molassesFlow * 0.3
-  const rpmBonus = ((params.grindingRPM - 1500) / 1500) * 25
-  const limeBonus = (params.limeAmount / 50) * 20
-  const curingBonus = (params.curingTime / 60) * 15
-  const noise = (Math.random() - 0.5) * 10
+  const rpmBonus     = ((params.grindingRPM - 1500) / 1500) * 25
+  const limeBonus    = (params.limeAmount / 50) * 20
+  const curingBonus  = (params.curingTime / 60) * 15
+  const noise        = (Math.random() - 0.5) * 10
   return Math.max(0, base + tempBonus + molassesBonus + rpmBonus + limeBonus + curingBonus + noise)
 }
 
@@ -66,13 +94,18 @@ export function simulationStep(
   activeEquipment: Set<string>,
   tick: number
 ): SensorReadings {
-  const kilnActive         = activeEquipment.has('rotary_kiln')
-  const dryerActive        = activeEquipment.has('rotary_dryer')
-  const ribbonMixerActive  = activeEquipment.has('ribbon_mixer')
-  const pumpActive         = activeEquipment.has('peristaltic_pump')
-  const limeActive         = activeEquipment.has('lime_dosifier')
-  const paddleMixerActive  = activeEquipment.has('paddle_mixer')
-  const activeCount        = activeEquipment.size
+  const kilnActive        = activeEquipment.has('rotary_kiln')
+  const dryerActive       = activeEquipment.has('rotary_dryer')
+  const ribbonMixerActive = activeEquipment.has('ribbon_mixer')
+  const pumpActive        = activeEquipment.has('peristaltic_pump')
+  const limeActive        = activeEquipment.has('lime_dosifier')
+  const paddleMixerActive = activeEquipment.has('paddle_mixer')
+  const marmitaActive     = activeEquipment.has('marmita')
+  const millActive        = activeEquipment.has('hammer_mill')
+  const bioreactorActive  = activeEquipment.has('bsf_bioreactor')
+  const bsfDryerActive    = activeEquipment.has('bsf_dryer')
+  const bsfMillActive     = activeEquipment.has('bsf_mill')
+  const activeCount       = activeEquipment.size
 
   return {
     kilnTemp:           calcKilnTemp(prev.kilnTemp, params.calcinationTemp, kilnActive),
@@ -82,16 +115,18 @@ export function simulationStep(
     exothermicTemp:     calcExothermicTemp(params.limeAmount, paddleMixerActive, limeActive, tick),
     mixViscosity:       calcViscosity(prev.molassesFlowActual),
     productionRate:     calcProductionRate(params, activeCount),
+    bloodFlourRate:     calcBloodFlourRate(marmitaActive, dryerActive, millActive),
+    bsfFlourRate:       calcBSFFlourRate(bioreactorActive, bsfDryerActive, bsfMillActive),
   }
 }
 
 export function buildTimePoint(tick: number, sensors: SensorReadings): TimeSeriesPoint {
   return {
-    time:          tick,
-    kilnTemp:      Math.round(sensors.kilnTemp * 10) / 10,
-    dryerTemp:     Math.round(sensors.dryerTemp * 10) / 10,
-    tankPressure:  Math.round(sensors.tankPressure * 10) / 10,
-    molassesFlow:  Math.round(sensors.molassesFlowActual * 10) / 10,
+    time:           tick,
+    kilnTemp:       Math.round(sensors.kilnTemp * 10) / 10,
+    dryerTemp:      Math.round(sensors.dryerTemp * 10) / 10,
+    tankPressure:   Math.round(sensors.tankPressure * 10) / 10,
+    molassesFlow:   Math.round(sensors.molassesFlowActual * 10) / 10,
     exothermicTemp: Math.round(sensors.exothermicTemp * 10) / 10,
   }
 }
