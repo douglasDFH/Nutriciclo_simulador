@@ -77,6 +77,25 @@ export interface TimeSeriesPoint {
   exothermicTemp: number
 }
 
+export interface ProductionPlan {
+  targetBlocks: number     // bloques objetivo
+  blockWeightKg: number    // peso por bloque en kg (25 kg)
+}
+
+// Formulación NutriCiclo — porcentaje de cada insumo en el bloque terminado
+export const BLOCK_FORMULA = [
+  { key: 'melaza',          label: 'Melaza de caña',      pct: 0.30, color: '#fbbf24', subProcess: null       },
+  { key: 'harinaSangre',    label: 'Harina de sangre',    pct: 0.10, color: '#ef4444', subProcess: 'sangre'   },
+  { key: 'cascarilla',      label: 'Cascarilla de arroz', pct: 0.10, color: '#d97706', subProcess: null       },
+  { key: 'afrechoSoya',     label: 'Afrecho de soya',     pct: 0.15, color: '#84cc16', subProcess: null       },
+  { key: 'urea',            label: 'Urea agrícola',       pct: 0.10, color: '#38bdf8', subProcess: null       },
+  { key: 'calViva',         label: 'Cal viva (CaO)',       pct: 0.10, color: '#e5e7eb', subProcess: null       },
+  { key: 'harinaHueso',     label: 'Harina de hueso',     pct: 0.05, color: '#fde68a', subProcess: 'hueso'    },
+  { key: 'salMineralizada', label: 'Sal mineralizada',    pct: 0.05, color: '#cbd5e1', subProcess: null       },
+  { key: 'harinaBSF',       label: 'Harina BSF (larvas)', pct: 0.04, color: '#a3e635', subProcess: 'bsf'      },
+  { key: 'azufre',          label: 'Azufre',              pct: 0.01, color: '#facc15', subProcess: null       },
+] as const
+
 export interface SimulatorState {
   params: SimulationParameters
   equipment: Record<EquipmentId, Equipment>
@@ -86,6 +105,8 @@ export interface SimulatorState {
   darkMode: boolean
   running: boolean
   tick: number
+  productionPlan: ProductionPlan
+  blocksProduced: number
   setParam: <K extends keyof SimulationParameters>(key: K, value: SimulationParameters[K]) => void
   toggleEquipment: (id: EquipmentId) => void
   toggleDarkMode: () => void
@@ -93,4 +114,5 @@ export interface SimulatorState {
   tick_simulation: () => void
   clearAlerts: () => void
   reset: () => void
+  setProductionPlan: (plan: Partial<ProductionPlan>) => void
 }

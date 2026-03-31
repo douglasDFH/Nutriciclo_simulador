@@ -6,6 +6,7 @@ import type {
   EquipmentId,
   Equipment,
   Alert,
+  ProductionPlan,
 } from '../simulation/types'
 import { simulationStep, buildTimePoint } from '../simulation/engine'
 
@@ -110,6 +111,11 @@ const INITIAL_SENSORS = {
   productionRate: 0,
 }
 
+const INITIAL_PLAN: ProductionPlan = {
+  targetBlocks: 500,
+  blockWeightKg: 25,
+}
+
 function checkAlerts(sensors: ReturnType<typeof simulationStep>, tick: number): Alert[] {
   const alerts: Alert[] = []
   const ts = new Date()
@@ -153,6 +159,8 @@ export const useSimulatorStore = create<SimulatorState>()(
     darkMode: true,
     running: false,
     tick: 0,
+    productionPlan: INITIAL_PLAN,
+    blocksProduced: 0,
 
     setParam: (key, value) =>
       set((state) => {
@@ -175,6 +183,11 @@ export const useSimulatorStore = create<SimulatorState>()(
     clearAlerts: () =>
       set((state) => { state.alerts = [] }),
 
+    setProductionPlan: (plan) =>
+      set((state) => {
+        state.productionPlan = { ...state.productionPlan, ...plan }
+      }),
+
     reset: () =>
       set(() => ({
         params: { ...INITIAL_PARAMS },
@@ -186,6 +199,7 @@ export const useSimulatorStore = create<SimulatorState>()(
         alerts: [],
         running: false,
         tick: 0,
+        blocksProduced: 0,
       })),
 
     tick_simulation: () =>
@@ -204,6 +218,15 @@ export const useSimulatorStore = create<SimulatorState>()(
 
         const point = buildTimePoint(tick, newSensors)
         state.timeSeries = [...state.timeSeries.slice(-59), point]
+
+        // Acumular bloques producidos (1 tick = 1 segundo)
+        // productionRate está en kg/h → kg/s = /3600 → bloques/s = /blockWeightKg
+        const kgPerTick = newSensors.productionRate / 3600
+        const blocksPerTick = kgPerTick / state.productionPlan.blockWeightKg
+        state.blocksProduced = Math.min(
+          state.blocksProduced + blocksPerTick,
+          state.productionPlan.targetBlocks
+        )
 
         // Update equipment status based on sensors
         if (state.equipment.rotary_kiln.active) {

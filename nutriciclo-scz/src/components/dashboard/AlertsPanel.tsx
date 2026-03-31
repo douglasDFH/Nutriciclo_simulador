@@ -25,10 +25,9 @@ function AlertItem({ alert }: { alert: Alert }) {
 }
 
 export function AlertsPanel() {
-  const { alerts, clearAlerts, sensors, params, equipment, tick } = useSimulatorStore()
+  const { alerts, clearAlerts, sensors, params, equipment, tick, blocksProduced, productionPlan } = useSimulatorStore()
 
   const exportReport = () => {
-    // Simple text report (jspdf optional enhancement)
     const activeEq = Object.values(equipment).filter(e => e.active).map(e => e.name).join(', ')
     const report = [
       '====================================',
@@ -51,6 +50,13 @@ export function AlertsPanel() {
       `Temp. Exotérmica: ${sensors.exothermicTemp.toFixed(1)} °C`,
       `Viscosidad Mezcla: ${sensors.mixViscosity.toFixed(0)} cP`,
       `Tasa de Producción: ${sensors.productionRate.toFixed(1)} kg/h`,
+      '',
+      '--- PLAN DE PRODUCCIÓN ---',
+      `Objetivo: ${productionPlan.targetBlocks} bloques × ${productionPlan.blockWeightKg} kg`,
+      `Total kg objetivo: ${(productionPlan.targetBlocks * productionPlan.blockWeightKg).toLocaleString()} kg`,
+      `Bloques producidos: ${Math.floor(blocksProduced)} / ${productionPlan.targetBlocks}`,
+      `Progreso: ${((blocksProduced / productionPlan.targetBlocks) * 100).toFixed(1)}%`,
+      `Tasa producción actual: ${sensors.productionRate.toFixed(1)} kg/h`,
       '',
       '--- EQUIPOS ACTIVOS ---',
       activeEq || 'Ninguno',
