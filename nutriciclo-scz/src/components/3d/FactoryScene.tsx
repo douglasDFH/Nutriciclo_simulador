@@ -35,8 +35,8 @@ function SceneContent() {
         enablePan
         enableZoom
         minDistance={5}
-        maxDistance={40}
-        target={[0, 0, 0]}
+        maxDistance={60}
+        target={[4, 0, 0]}
       />
       <Environment preset="night" />
     </>
@@ -50,7 +50,7 @@ export function FactoryScene() {
     <div className="w-full h-full relative">
       <Canvas
         shadows
-        camera={{ position: [15, 10, 15], fov: 45 }}
+        camera={{ position: [4, 14, 28], fov: 55 }}
         style={{ background: darkMode ? '#030712' : '#0f172a' }}
         gl={{ antialias: true }}
       >

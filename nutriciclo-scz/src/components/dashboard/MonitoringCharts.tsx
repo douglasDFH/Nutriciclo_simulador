@@ -67,18 +67,27 @@ function ChartCard({ title, unit, dataKey, color, warningLevel, errorLevel, doma
 
 export function MonitoringCharts() {
   return (
-    <div className="grid grid-cols-2 gap-3 p-3">
+    <div className="grid grid-cols-2 gap-3 p-3 pb-1">
       <ChartCard
-        title="Temperatura Horno"
+        title="Temp. Horno Rotatorio"
         unit="°C"
         dataKey="kilnTemp"
         color="#f97316"
         warningLevel={600}
-        errorLevel={650}
-        domain={[0, 750]}
+        errorLevel={620}
+        domain={[0, 700]}
       />
       <ChartCard
-        title="Presión Tanque"
+        title="Temp. Secador Rotatorio"
+        unit="°C"
+        dataKey="dryerTemp"
+        color="#fb923c"
+        warningLevel={120}
+        errorLevel={130}
+        domain={[0, 150]}
+      />
+      <ChartCard
+        title="Presión Mezcladora Cintas"
         unit="PSI"
         dataKey="tankPressure"
         color="#3b82f6"
@@ -88,13 +97,13 @@ export function MonitoringCharts() {
       />
       <ChartCard
         title="Flujo Melaza"
-        unit="L/min"
+        unit="L/h"
         dataKey="molassesFlow"
         color="#fbbf24"
         domain={[0, 110]}
       />
       <ChartCard
-        title="Temp. Exotérmica"
+        title="Temp. Exotérmica (Cal)"
         unit="°C"
         dataKey="exothermicTemp"
         color="#a78bfa"

@@ -1,13 +1,24 @@
 export type PhaseId = 'phase1' | 'phase2' | 'phase3'
 
 export type EquipmentId =
-  | 'blood_boiler'
+  // Fase 1 — Preparación Intensiva
+  | 'marmita'
+  | 'rotary_dryer'
+  | 'screw_conveyor'
   | 'rotary_kiln'
   | 'hammer_mill'
-  | 'molasses_pump'
-  | 'mixer_tank'
+  // Fase 2 — Mezcla Húmeda
+  | 'molasses_tank'
+  | 'peristaltic_pump'
+  | 'dissolution_tank'
+  | 'transfer_pump'
+  | 'ribbon_mixer'
+  // Fase 3 — Fraguado
+  | 'paddle_mixer'
   | 'lime_dosifier'
-  | 'mold_station'
+  | 'vibrating_table'
+  | 'belt_conveyor'
+  | 'ventilation'
 
 export type EquipmentStatus = 'inactive' | 'active' | 'warning' | 'error'
 
@@ -31,17 +42,18 @@ export interface Equipment {
 }
 
 export interface SimulationParameters {
-  calcinationTemp: number       // 400–700 °C
-  grindingRPM: number           // 500–3000
-  molassesFlow: number          // 0–100 L/min
+  calcinationTemp: number       // 500–600 °C
+  grindingRPM: number           // 1500–3000
+  molassesFlow: number          // 0–100 L/h
   limeAmount: number            // 0–50 kg
   curingTime: number            // 5–60 min
 }
 
 export interface SensorReadings {
   kilnTemp: number              // °C
+  dryerTemp: number             // °C
   tankPressure: number          // PSI
-  molassesFlowActual: number    // L/min
+  molassesFlowActual: number    // L/h
   exothermicTemp: number        // °C
   mixViscosity: number          // cP
   productionRate: number        // kg/h
@@ -59,29 +71,21 @@ export interface Alert {
 export interface TimeSeriesPoint {
   time: number
   kilnTemp: number
+  dryerTemp: number
   tankPressure: number
   molassesFlow: number
   exothermicTemp: number
 }
 
 export interface SimulatorState {
-  // Parameters
   params: SimulationParameters
-  // Equipment
   equipment: Record<EquipmentId, Equipment>
-  // Sensors
   sensors: SensorReadings
-  // Time series data (last 60 points)
   timeSeries: TimeSeriesPoint[]
-  // Alerts
   alerts: Alert[]
-  // Dark mode
   darkMode: boolean
-  // Running
   running: boolean
-  // Tick counter
   tick: number
-  // Actions
   setParam: <K extends keyof SimulationParameters>(key: K, value: SimulationParameters[K]) => void
   toggleEquipment: (id: EquipmentId) => void
   toggleDarkMode: () => void

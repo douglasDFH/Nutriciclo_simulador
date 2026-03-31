@@ -70,24 +70,24 @@ export function ScenarioControls() {
       <SliderRow
         label="Temperatura de Calcinación"
         paramKey="calcinationTemp"
-        min={400}
-        max={700}
+        min={500}
+        max={600}
         step={10}
         unit="°C"
         textClass="text-orange-400"
         hex="#fb923c"
-        safeRange={[450, 650]}
+        safeRange={[500, 600]}
       />
       <SliderRow
         label="Velocidad de Molienda"
         paramKey="grindingRPM"
-        min={500}
+        min={1500}
         max={3000}
         step={50}
         unit="RPM"
         textClass="text-yellow-400"
         hex="#facc15"
-        safeRange={[800, 2500]}
+        safeRange={[1500, 3000]}
       />
       <SliderRow
         label="Flujo de Melaza"

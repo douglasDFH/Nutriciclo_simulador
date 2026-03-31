@@ -11,52 +11,98 @@ import { simulationStep, buildTimePoint } from '../simulation/engine'
 
 const INITIAL_PARAMS: SimulationParameters = {
   calcinationTemp: 550,
-  grindingRPM: 1500,
+  grindingRPM: 2000,
   molassesFlow: 40,
   limeAmount: 20,
   curingTime: 30,
 }
 
 const INITIAL_EQUIPMENT: Record<EquipmentId, Equipment> = {
-  blood_boiler: {
-    id: 'blood_boiler', name: 'Hervidor de Sangre', phase: 'phase1', status: 'inactive', active: false,
-    model: 'BSP-500 Pro', manufacturer: 'Meyn Food Processing',
-    specs: { capacity: '500 L / ciclo', power: '18 kW', material: 'AISI-316L', tempRange: '20–100 °C', notes: 'Hervor + prensado en 20 min. Válvula de seguridad 1.5 bar.' },
+  // ── FASE 1 ──────────────────────────────────────────────────────────────
+  marmita: {
+    id: 'marmita', name: 'Marmita Industrial', phase: 'phase1', status: 'inactive', active: false,
+    model: 'MV-300', manufacturer: 'Jersa / Vulcano',
+    specs: { capacity: '300 L / ciclo', power: '12 kW', material: 'AISI-304', tempRange: '20–150 °C', notes: 'Doble fondo para calentamiento. Sistema de prensado integrado. Hervor + prensado en 20 min. Válvula de seguridad 1.5 bar.' },
+  },
+  rotary_dryer: {
+    id: 'rotary_dryer', name: 'Secador Rotatorio', phase: 'phase1', status: 'inactive', active: false,
+    model: 'SD-500', manufacturer: 'Vulcanotec / CITIC HIC',
+    specs: { capacity: '0.5–3 t/h', power: '22 kW', material: 'Acero carbono + refractario', tempRange: '80–120 °C', notes: 'Flujo de aire caliente contracorriente. Secado de harina de sangre prensada y subproductos húmedos antes de molienda.' },
+  },
+  screw_conveyor: {
+    id: 'screw_conveyor', name: 'Transportador Sinfín', phase: 'phase1', status: 'inactive', active: false,
+    model: 'TSC-250', manufacturer: 'WAM Group / Bega Helicoidales',
+    specs: { capacity: '1–15 t/h', power: '5.5 kW', material: 'Acero al carbono', notes: 'Diámetro 250 mm. Longitud hasta 12 m. Transporte de huesos al horno, harinas al molino, etc.' },
   },
   rotary_kiln: {
     id: 'rotary_kiln', name: 'Horno Rotatorio', phase: 'phase1', status: 'inactive', active: false,
-    model: 'KilnMaster HR-4×40', manufacturer: 'FLSmidth',
-    specs: { capacity: '4 t/h de hueso', power: '75 kW', material: 'Refractario Al₂O₃ 70%', tempRange: '400–700 °C', notes: 'Calcinación 4 h. Velocidad rot. 1–5 RPM. Inclinación 3°.' },
+    model: 'RK-Series Φ4.0×60m', manufacturer: 'CITIC HIC / FTM Machinery',
+    specs: { capacity: '1–5 t/h de hueso', power: '75 kW', material: 'Refractario Al₂O₃', tempRange: '500–600 °C', notes: 'Calcinación de huesos crudos 4 h para producir harina de hueso (fosfato de calcio). Inclinación 2.5–4.5°. Velocidad rot. 1–5 RPM.' },
   },
   hammer_mill: {
     id: 'hammer_mill', name: 'Molino de Martillos', phase: 'phase1', status: 'inactive', active: false,
-    model: 'CrushMaster HM-3000', manufacturer: 'Williams Crusher & Pulverizer',
-    specs: { capacity: '1.5 t/h', power: '22 kW', material: 'Acero manganeso Mn13', notes: 'Criba intercambiable 2 mm. Velocidad 500–3000 RPM. 24 martillos.' },
+    model: '9FQ-Series', manufacturer: 'RICHI / ANCO / Prater Mega Mill',
+    specs: { capacity: '1–10 t/h', power: '22–55 kW', material: 'Acero inox. AISI-304', notes: 'Criba intercambiable 2 mm para cascarilla. Velocidad 1500–3000 RPM. Molienda de cascarilla, harina de sangre, hueso y BSF.' },
   },
-  molasses_pump: {
-    id: 'molasses_pump', name: 'Bomba de Melaza', phase: 'phase2', status: 'inactive', active: false,
-    model: 'LKH-25 Centrifugal', manufacturer: 'Alfa Laval',
-    specs: { capacity: '0–100 L/min', power: '5.5 kW', material: 'INOX 316L / EPDM', notes: 'Bomba sanitaria. Viscosidad máx 5000 cP. Cabezal máx 40 m.' },
+
+  // ── FASE 2 ──────────────────────────────────────────────────────────────
+  molasses_tank: {
+    id: 'molasses_tank', name: 'Tanque Almacenamiento Melaza', phase: 'phase2', status: 'inactive', active: false,
+    model: 'TCI-2000', manufacturer: 'Inoxpa / Sprinkman Stainless Tanks',
+    specs: { capacity: '1000–5000 L', power: '1.5 kW', material: 'AISI-304/316. Fondo cónico', notes: 'Almacenamiento de melaza en frío. Agitador opcional. Descarga total por fondo cónico.' },
   },
-  mixer_tank: {
-    id: 'mixer_tank', name: 'Tanque Mezclador', phase: 'phase2', status: 'inactive', active: false,
-    model: 'MixPro MX-2500', manufacturer: 'SPX Flow Technology',
-    specs: { capacity: '2500 L', power: '15 kW', material: 'AISI-304 + revestimiento epoxi', notes: 'Agitador de paletas cruzadas. Presión máx 80 PSI. Sensor de nivel ultrasónico.' },
+  peristaltic_pump: {
+    id: 'peristaltic_pump', name: 'Bomba Peristáltica Dosificadora', phase: 'phase2', status: 'inactive', active: false,
+    model: 'DULCOFLEX DFYa', manufacturer: 'ProMinent / Watson-Marlow Qdos 60',
+    specs: { capacity: '10 ml/h – 660 L/h', power: '0.75 kW', material: 'EPDM / FKM', notes: 'Sin válvulas. Precisión ±1%. Compatible IoT (PROFIBUS/CANopen). Dosificación precisa de melaza al mezclador.' },
+  },
+  dissolution_tank: {
+    id: 'dissolution_tank', name: 'Batea de Disolución', phase: 'phase2', status: 'inactive', active: false,
+    model: 'DT-300', manufacturer: 'Inoxpa / Fabricación local',
+    specs: { capacity: '200–500 L', power: '3 kW', material: 'AISI-304', notes: 'Agitador de paletas tipo ancla. Control de temperatura. Disolución de urea y sal mineralizada en agua antes de incorporar al mezclador.' },
+  },
+  transfer_pump: {
+    id: 'transfer_pump', name: 'Bomba Centrífuga Sanitaria', phase: 'phase2', status: 'inactive', active: false,
+    model: 'LKH-25', manufacturer: 'Alfa Laval / Inoxpa RV-80',
+    specs: { capacity: '5–50 m³/h', power: '5.5 kW', material: 'AISI-316L. Sello mecánico', notes: 'Certificación sanitaria. Transferencia de solución urea/sal desde batea al mezclador principal.' },
+  },
+  ribbon_mixer: {
+    id: 'ribbon_mixer', name: 'Mezcladora Horizontal de Cintas', phase: 'phase2', status: 'inactive', active: false,
+    model: 'HJJ-3000', manufacturer: 'Huaxin / Bremetz WLDH',
+    specs: { capacity: '500–3000 kg/lote', power: '37 kW', material: 'AISI-304 + revestimiento epoxi', notes: 'Doble espiral inversa. Tiempo de mezcla 10–15 min. Mezcla húmeda homogénea de melaza con urea y sal mineralizada.' },
+  },
+
+  // ── FASE 3 ──────────────────────────────────────────────────────────────
+  paddle_mixer: {
+    id: 'paddle_mixer', name: 'Mezcladora Paletas Doble Eje', phase: 'phase3', status: 'inactive', active: false,
+    model: 'WLDH-2000', manufacturer: 'Huaxin / ACME WZ Series',
+    specs: { capacity: '1–5 t/lote', power: '45 kW', material: 'Acero carbono + recubrimiento', notes: 'Doble eje con paletas ajustables. Tiempo de mezcla 3–8 min. Descarga rápida. Incorporación de sólidos a la mezcla húmeda.' },
   },
   lime_dosifier: {
-    id: 'lime_dosifier', name: 'Dosificador de Cal', phase: 'phase3', status: 'inactive', active: false,
-    model: 'DISOCONT DL-200', manufacturer: 'Schenck Process',
-    specs: { capacity: '0–200 kg/h', power: '2.2 kW', material: 'Acero carbono + recub. polietileno', notes: 'Dosificación gravimétrica ±0.5%. Tolva 500 kg. Vibrador antiapelmazante.' },
+    id: 'lime_dosifier', name: 'Dosificador de Cal Viva', phase: 'phase3', status: 'inactive', active: false,
+    model: 'K-ML-D5-KT20', manufacturer: 'Schenck Process / K-Tron (Coperion)',
+    specs: { capacity: '50–500 kg/h', power: '2.2 kW', material: 'Acero carbono + polietileno', notes: 'Tornillo dosificador con variador de frecuencia. Precisión ±0.5%. Sellado hermético anti-polvo. Tolva 500 kg.' },
   },
-  mold_station: {
-    id: 'mold_station', name: 'Estación de Moldes', phase: 'phase3', status: 'inactive', active: false,
-    model: 'FormTech MLD-500', manufacturer: 'Bühler AG',
-    specs: { capacity: '500 unid/h', power: '8 kW', material: 'Polipropileno HD + aluminio', notes: 'Moldes de 1 kg. Tiempo de curado 5–60 min. Sistema desmoldante automático.' },
+  vibrating_table: {
+    id: 'vibrating_table', name: 'Vibradora de Mesa + Moldes', phase: 'phase3', status: 'inactive', active: false,
+    model: 'VT-1000', manufacturer: 'Vibra Technologie / Syntron FMC',
+    specs: { capacity: '20–100 unid/ciclo', power: '3 kW', material: 'Acero + moldes Al fundido', notes: 'Mesa 1000×1500 mm. Frecuencia 3000–6000 VPM. Vertido y vibración para eliminar burbujas durante fraguado exotérmico.' },
+  },
+  belt_conveyor: {
+    id: 'belt_conveyor', name: 'Cinta Transportadora', phase: 'phase3', status: 'inactive', active: false,
+    model: 'FlatTop Series', manufacturer: 'Interroll / Rexnord',
+    specs: { capacity: 'variable', power: '1.5 kW', material: 'Banda PVC/PU alimentaria', notes: 'Ancho 400–800 mm. Velocidad 0.1–1 m/s. Largo hasta 15 m. Transporte de moldes llenos a zona de curado y producto terminado a empaque.' },
+  },
+  ventilation: {
+    id: 'ventilation', name: 'Sistema de Ventilación', phase: 'phase3', status: 'inactive', active: false,
+    model: 'CMP-4500', manufacturer: 'Sodeca / Systemair AW',
+    specs: { capacity: '2000–8000 m³/h', power: '5.5 kW', material: 'Ductos acero galvanizado', notes: 'Filtros de partículas. Extracción de gases y calor generado por reacción exotérmica de cal viva. Seguridad del operador.' },
   },
 }
 
 const INITIAL_SENSORS = {
   kilnTemp: 25,
+  dryerTemp: 25,
   tankPressure: 5,
   molassesFlowActual: 0,
   exothermicTemp: 25,
@@ -68,62 +114,37 @@ function checkAlerts(sensors: ReturnType<typeof simulationStep>, tick: number): 
   const alerts: Alert[] = []
   const ts = new Date()
 
-  if (sensors.kilnTemp > 650) {
-    alerts.push({
-      id: `kiln-hot-${tick}`,
-      timestamp: ts,
-      type: 'error',
-      message: `Temperatura del horno crítica: ${sensors.kilnTemp.toFixed(1)}°C (límite: 650°C)`,
-      parameter: 'kilnTemp',
-      value: sensors.kilnTemp,
-    })
+  if (sensors.kilnTemp > 620) {
+    alerts.push({ id: `kiln-hot-${tick}`, timestamp: ts, type: 'error',
+      message: `Temperatura horno crítica: ${sensors.kilnTemp.toFixed(1)}°C (límite: 620°C)`, parameter: 'kilnTemp', value: sensors.kilnTemp })
   } else if (sensors.kilnTemp > 600) {
-    alerts.push({
-      id: `kiln-warn-${tick}`,
-      timestamp: ts,
-      type: 'warning',
-      message: `Temperatura del horno elevada: ${sensors.kilnTemp.toFixed(1)}°C`,
-      parameter: 'kilnTemp',
-      value: sensors.kilnTemp,
-    })
+    alerts.push({ id: `kiln-warn-${tick}`, timestamp: ts, type: 'warning',
+      message: `Temperatura horno elevada: ${sensors.kilnTemp.toFixed(1)}°C`, parameter: 'kilnTemp', value: sensors.kilnTemp })
+  }
+
+  if (sensors.dryerTemp > 130) {
+    alerts.push({ id: `dryer-hot-${tick}`, timestamp: ts, type: 'warning',
+      message: `Temperatura secador alta: ${sensors.dryerTemp.toFixed(1)}°C (límite: 120°C)`, parameter: 'dryerTemp', value: sensors.dryerTemp })
   }
 
   if (sensors.tankPressure > 50) {
-    alerts.push({
-      id: `pressure-${tick}`,
-      timestamp: ts,
-      type: 'error',
-      message: `Presión del tanque crítica: ${sensors.tankPressure.toFixed(1)} PSI (límite: 50 PSI)`,
-      parameter: 'tankPressure',
-      value: sensors.tankPressure,
-    })
+    alerts.push({ id: `pressure-${tick}`, timestamp: ts, type: 'error',
+      message: `Presión mezcladora crítica: ${sensors.tankPressure.toFixed(1)} PSI`, parameter: 'tankPressure', value: sensors.tankPressure })
   } else if (sensors.tankPressure > 40) {
-    alerts.push({
-      id: `pressure-warn-${tick}`,
-      timestamp: ts,
-      type: 'warning',
-      message: `Presión del tanque elevada: ${sensors.tankPressure.toFixed(1)} PSI`,
-      parameter: 'tankPressure',
-      value: sensors.tankPressure,
-    })
+    alerts.push({ id: `pressure-warn-${tick}`, timestamp: ts, type: 'warning',
+      message: `Presión mezcladora elevada: ${sensors.tankPressure.toFixed(1)} PSI`, parameter: 'tankPressure', value: sensors.tankPressure })
   }
 
   if (sensors.exothermicTemp > 180) {
-    alerts.push({
-      id: `exo-${tick}`,
-      timestamp: ts,
-      type: 'warning',
-      message: `Reacción exotérmica intensa: ${sensors.exothermicTemp.toFixed(1)}°C`,
-      parameter: 'exothermicTemp',
-      value: sensors.exothermicTemp,
-    })
+    alerts.push({ id: `exo-${tick}`, timestamp: ts, type: 'warning',
+      message: `Reacción exotérmica intensa: ${sensors.exothermicTemp.toFixed(1)}°C`, parameter: 'exothermicTemp', value: sensors.exothermicTemp })
   }
 
   return alerts
 }
 
 export const useSimulatorStore = create<SimulatorState>()(
-  immer((set, _get) => ({
+  immer((set) => ({
     params: INITIAL_PARAMS,
     equipment: INITIAL_EQUIPMENT,
     sensors: INITIAL_SENSORS,
@@ -146,19 +167,13 @@ export const useSimulatorStore = create<SimulatorState>()(
       }),
 
     toggleDarkMode: () =>
-      set((state) => {
-        state.darkMode = !state.darkMode
-      }),
+      set((state) => { state.darkMode = !state.darkMode }),
 
     toggleRunning: () =>
-      set((state) => {
-        state.running = !state.running
-      }),
+      set((state) => { state.running = !state.running }),
 
     clearAlerts: () =>
-      set((state) => {
-        state.alerts = []
-      }),
+      set((state) => { state.alerts = [] }),
 
     reset: () =>
       set(() => ({
@@ -181,9 +196,7 @@ export const useSimulatorStore = create<SimulatorState>()(
         state.tick = tick
 
         const activeSet = new Set<string>(
-          Object.values(state.equipment)
-            .filter((e) => e.active)
-            .map((e) => e.id)
+          Object.values(state.equipment).filter((e) => e.active).map((e) => e.id)
         )
 
         const newSensors = simulationStep(state.sensors, state.params, activeSet, tick)
@@ -192,19 +205,27 @@ export const useSimulatorStore = create<SimulatorState>()(
         const point = buildTimePoint(tick, newSensors)
         state.timeSeries = [...state.timeSeries.slice(-59), point]
 
-        // Update equipment status based on sensor readings
+        // Update equipment status based on sensors
         if (state.equipment.rotary_kiln.active) {
-          if (newSensors.kilnTemp > 650) state.equipment.rotary_kiln.status = 'error'
+          if (newSensors.kilnTemp > 620) state.equipment.rotary_kiln.status = 'error'
           else if (newSensors.kilnTemp > 600) state.equipment.rotary_kiln.status = 'warning'
           else state.equipment.rotary_kiln.status = 'active'
         }
-        if (state.equipment.mixer_tank.active) {
-          if (newSensors.tankPressure > 50) state.equipment.mixer_tank.status = 'error'
-          else if (newSensors.tankPressure > 40) state.equipment.mixer_tank.status = 'warning'
-          else state.equipment.mixer_tank.status = 'active'
+        if (state.equipment.rotary_dryer.active) {
+          if (newSensors.dryerTemp > 130) state.equipment.rotary_dryer.status = 'warning'
+          else state.equipment.rotary_dryer.status = 'active'
+        }
+        if (state.equipment.ribbon_mixer.active) {
+          if (newSensors.tankPressure > 50) state.equipment.ribbon_mixer.status = 'error'
+          else if (newSensors.tankPressure > 40) state.equipment.ribbon_mixer.status = 'warning'
+          else state.equipment.ribbon_mixer.status = 'active'
+        }
+        if (state.equipment.paddle_mixer.active) {
+          if (newSensors.exothermicTemp > 180) state.equipment.paddle_mixer.status = 'warning'
+          else state.equipment.paddle_mixer.status = 'active'
         }
 
-        // Alerts (only on every 5th tick to avoid spam)
+        // Alerts every 5th tick
         if (tick % 5 === 0) {
           const newAlerts = checkAlerts(newSensors, tick)
           if (newAlerts.length > 0) {

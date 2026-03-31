@@ -119,9 +119,12 @@ export function MachineControls() {
       {/* Live sensor summary */}
       <div className="grid grid-cols-3 gap-2 pt-1">
         {[
-          { label: 'Horno', value: `${sensors.kilnTemp.toFixed(0)}°C`, color: 'text-orange-400' },
-          { label: 'Tanque', value: `${sensors.tankPressure.toFixed(1)} PSI`, color: 'text-blue-400' },
-          { label: 'Melaza', value: `${sensors.molassesFlowActual.toFixed(1)} L/m`, color: 'text-yellow-400' },
+          { label: 'Horno',    value: `${sensors.kilnTemp.toFixed(0)}°C`,            color: 'text-orange-400' },
+          { label: 'Secador',  value: `${sensors.dryerTemp.toFixed(0)}°C`,            color: 'text-amber-400' },
+          { label: 'Mezclad.', value: `${sensors.tankPressure.toFixed(1)} PSI`,       color: 'text-blue-400' },
+          { label: 'Melaza',   value: `${sensors.molassesFlowActual.toFixed(1)} L/h`, color: 'text-yellow-400' },
+          { label: 'Exotérm.', value: `${sensors.exothermicTemp.toFixed(0)}°C`,       color: 'text-purple-400' },
+          { label: 'Produc.',  value: `${sensors.productionRate.toFixed(0)} kg/h`,    color: 'text-green-400' },
         ].map((s) => (
           <div key={s.label} className="bg-gray-800/60 rounded p-2 text-center">
             <div className="text-gray-500 text-xs">{s.label}</div>
