@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
 import { BLOCK_FORMULA } from '../../simulation/types'
-import { CheckCircle, AlertTriangle, XCircle, Package, Clock, TrendingUp, FlaskConical } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, Package, Clock, TrendingUp, FlaskConical, BookOpen } from 'lucide-react'
 import { clsx } from 'clsx'
+import { RecetasModal } from './RecetasModal'
 
 // ─── Sub-proceso de harinas ───────────────────────────────────────────────────
 const SUB_PROCESSES = [
@@ -48,6 +49,7 @@ const STATUS_ICON = {
 export function ProductionPanel() {
   const { productionPlan, blocksProduced, sensors, running, setProductionPlan, equipment } = useSimulatorStore()
   const [inputBlocks, setInputBlocks] = useState(String(productionPlan.targetBlocks))
+  const [showRecetas, setShowRecetas] = useState(false)
 
   const { targetBlocks, blockWeightKg } = productionPlan
   const totalKg        = targetBlocks * blockWeightKg
@@ -65,6 +67,18 @@ export function ProductionPanel() {
 
   return (
     <div className="p-3 space-y-4 overflow-y-auto">
+
+      {/* Modal de recetas */}
+      {showRecetas && <RecetasModal onClose={() => setShowRecetas(false)} />}
+
+      {/* ── Botón Guía de Producción ── */}
+      <button
+        onClick={() => setShowRecetas(true)}
+        className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-green-900/40 hover:bg-green-800/60 border border-green-700 hover:border-green-500 rounded-lg text-green-400 hover:text-green-300 text-sm font-semibold transition-all"
+      >
+        <BookOpen className="w-4 h-4" />
+        Guía de Producción — Conversiones y Receta del Bloque
+      </button>
 
       {/* ── Plan de producción ── */}
       <section className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 space-y-3">
