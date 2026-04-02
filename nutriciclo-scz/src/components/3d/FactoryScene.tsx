@@ -1,14 +1,28 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Grid } from '@react-three/drei'
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import { Phase1Equipment } from './Phase1Equipment'
 import { Phase2Equipment } from './Phase2Equipment'
 import { Phase3Equipment } from './Phase3Equipment'
 import { BSFSubProcess } from './BSFSubProcess'
 import { MaterialFlow } from './MaterialFlow'
+import { PhaseInfoPanel, PHASE_CONFIG } from './PhaseInfoPanel'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
+import type { PhaseId } from '../../simulation/types'
+import { clsx } from 'clsx'
 
-function SceneContent() {
+// Posición central de cada fase para enfocar la cámara
+const PHASE_CAMERA_TARGET: Record<string, [number, number, number]> = {
+  phase1:  [-8,  0, 0],
+  phase2:  [4,   0, 0],
+  phase3:  [16,  0, 0],
+  subproc: [0,   0, -8],
+}
+
+function SceneContent({ selectedPhase }: { selectedPhase: PhaseId | null }) {
+  const show = (phase: PhaseId) => selectedPhase === null || selectedPhase === phase
+  const target = selectedPhase ? PHASE_CAMERA_TARGET[selectedPhase] : ([4, 0, 0] as [number, number, number])
+
   return (
     <>
       <ambientLight intensity={0.3} />
@@ -26,23 +40,22 @@ function SceneContent() {
         infiniteGrid
       />
 
-      {/* Main production line */}
-      <Phase1Equipment />
-      <Phase2Equipment />
-      <Phase3Equipment />
+      {/* Mostrar solo la fase seleccionada (o todas si ninguna está seleccionada) */}
+      {show('phase1')  && <Phase1Equipment  hideLabels={selectedPhase !== null} />}
+      {show('phase2')  && <Phase2Equipment  hideLabels={selectedPhase !== null} />}
+      {show('phase3')  && <Phase3Equipment  hideLabels={selectedPhase !== null} />}
+      {show('subproc') && <BSFSubProcess    hideLabels={selectedPhase !== null} />}
 
-      {/* BSF sub-process (behind main line, z = -8) */}
-      <BSFSubProcess />
-
-      <MaterialFlow />
+      {/* Flujo de materiales solo en vista completa */}
+      {selectedPhase === null && <MaterialFlow />}
 
       <OrbitControls
         makeDefault
         enablePan
         enableZoom
-        minDistance={5}
+        minDistance={3}
         maxDistance={70}
-        target={[4, 0, 0]}
+        target={target}
       />
       <Environment preset="night" />
     </>
@@ -50,7 +63,12 @@ function SceneContent() {
 }
 
 export function FactoryScene() {
-  const { darkMode } = useSimulatorStore()
+  const { darkMode, equipment } = useSimulatorStore()
+  const [selectedPhase, setSelectedPhase] = useState<PhaseId | null>(null)
+
+  function handlePhaseClick(phaseId: PhaseId) {
+    setSelectedPhase((prev) => (prev === phaseId ? null : phaseId))
+  }
 
   return (
     <div className="w-full h-full relative">
@@ -61,24 +79,53 @@ export function FactoryScene() {
         gl={{ antialias: true }}
       >
         <Suspense fallback={null}>
-          <SceneContent />
+          <SceneContent selectedPhase={selectedPhase} />
         </Suspense>
       </Canvas>
 
-      {/* Phase labels overlay */}
-      <div className="absolute top-3 left-3 flex gap-2 text-xs pointer-events-none flex-wrap">
-        <span className="px-2 py-1 bg-red-900/70 text-red-300 rounded border border-red-700">
-          FASE 1 — Preparación
-        </span>
-        <span className="px-2 py-1 bg-blue-900/70 text-blue-300 rounded border border-blue-700">
-          FASE 2 — Mezcla
-        </span>
-        <span className="px-2 py-1 bg-green-900/70 text-green-300 rounded border border-green-700">
-          FASE 3 — Fraguado
-        </span>
-        <span className="px-2 py-1 bg-lime-900/70 text-lime-300 rounded border border-lime-700">
-          SUB-PROC — BSF
-        </span>
+      {/* Panel lateral de fase seleccionada */}
+      {selectedPhase && (
+        <PhaseInfoPanel
+          phaseId={selectedPhase}
+          onClose={() => setSelectedPhase(null)}
+        />
+      )}
+
+      {/* Botones de fase — top left */}
+      <div className={clsx(
+        'absolute top-3 flex gap-2 text-xs flex-wrap transition-all duration-300',
+        selectedPhase ? 'left-[19rem]' : 'left-3'
+      )}>
+        {PHASE_CONFIG.map((phase) => {
+          const activeCount = phase.equipmentIds.filter((id) => equipment[id].active).length
+          const isSelected = selectedPhase === phase.id
+          return (
+            <button
+              key={phase.id}
+              onClick={() => handlePhaseClick(phase.id)}
+              className={clsx(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold transition-all',
+                'hover:scale-105 active:scale-95',
+                isSelected
+                  ? `${phase.color} ${phase.border} ${phase.bg} shadow-lg ring-1 ring-current`
+                  : `${phase.color} ${phase.border} bg-gray-950/80 hover:${phase.bg}`
+              )}
+            >
+              {/* dot de estado */}
+              <span className={clsx(
+                'w-2 h-2 rounded-full flex-shrink-0',
+                activeCount > 0 ? phase.dot : 'bg-gray-600'
+              )} />
+              <span>{phase.label}</span>
+              <span className="opacity-60 font-normal">— {phase.subtitle}</span>
+              {activeCount > 0 && (
+                <span className={clsx('ml-1 text-xs font-mono', phase.color)}>
+                  {activeCount}/{phase.equipmentIds.length}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {/* Production overlay */}

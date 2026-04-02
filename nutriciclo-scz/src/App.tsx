@@ -50,15 +50,15 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main layout: 3D top, panel bottom */}
-      <div className="flex flex-col flex-1 min-h-0">
-        {/* 3D Scene — 55% height */}
-        <div className="flex-none" style={{ height: '55%' }}>
+      {/* Main layout: 3D izquierda, panel derecha */}
+      <div className="flex flex-row flex-1 min-h-0">
+        {/* 3D Scene — ocupa el espacio restante */}
+        <div className="flex-1 min-w-0">
           <FactoryScene />
         </div>
 
-        {/* Control Panel — 45% height */}
-        <div className="flex-none" style={{ height: '45%' }}>
+        {/* Control Panel — lateral derecho, ancho fijo */}
+        <div className="flex-none w-80 border-l border-gray-800">
           <ControlPanel />
         </div>
       </div>
