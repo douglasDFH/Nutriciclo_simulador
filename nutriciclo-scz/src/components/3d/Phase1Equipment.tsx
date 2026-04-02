@@ -1,8 +1,41 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Text, Html } from '@react-three/drei'
+import { Text, Html, useGLTF } from '@react-three/drei'
 import type { Mesh } from 'three'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
+
+// Preload para evitar parpadeo al montar
+useGLTF.preload('/marmita.glb')
+
+function MarmitaModel({ active, status }: { active: boolean; status: string }) {
+  const { scene } = useGLTF('/marmita.glb')
+  const cloned = scene.clone()
+
+  // Aplica emissive según estado
+  cloned.traverse((child) => {
+    if ((child as Mesh).isMesh) {
+      const mesh = child as Mesh
+      const mat = (mesh.material as { emissive?: { set: (c: string) => void }; emissiveIntensity?: number })
+      if (mat?.emissive) {
+        if (!active) {
+          mat.emissive.set('#000000')
+          if (mat.emissiveIntensity !== undefined) mat.emissiveIntensity = 0
+        } else if (status === 'error') {
+          mat.emissive.set('#ef4444')
+          if (mat.emissiveIntensity !== undefined) mat.emissiveIntensity = 0.4
+        } else if (status === 'warning') {
+          mat.emissive.set('#facc15')
+          if (mat.emissiveIntensity !== undefined) mat.emissiveIntensity = 0.3
+        } else {
+          mat.emissive.set('#22c55e')
+          if (mat.emissiveIntensity !== undefined) mat.emissiveIntensity = 0.2
+        }
+      }
+    }
+  })
+
+  return <primitive object={cloned} scale={[1, 1, 1]} />
+}
 
 function color(active: boolean, status: string, hot?: number): string {
   if (!active) return '#374151'
@@ -31,7 +64,6 @@ export function Phase1Equipment() {
     if (scinfinRef.current && scinfinActive) scinfinRef.current.rotation.x += delta * 2
   })
 
-  const marmitaColor = color(marmitaActive, equipment.marmita.status)
   const dryerColor   = color(dryerActive,   equipment.rotary_dryer.status, sensors.dryerTemp)
   const scinfinColor = color(scinfinActive, equipment.screw_conveyor.status)
   const kilnColor    = color(kilnActive,    equipment.rotary_kiln.status, sensors.kilnTemp)
@@ -43,18 +75,9 @@ export function Phase1Equipment() {
         FASE 1 — Preparación Intensiva
       </Text>
 
-      {/* Marmita — cylinder (cooking pot) */}
+      {/* Marmita — modelo GLB real */}
       <group position={[0, 0, 0]}>
-        <mesh castShadow>
-          <cylinderGeometry args={[0.7, 0.6, 1.6, 16]} />
-          <meshStandardMaterial color={marmitaColor} metalness={0.6} roughness={0.3}
-            emissive={marmitaActive ? marmitaColor : '#000'} emissiveIntensity={0.2} />
-        </mesh>
-        {/* lid */}
-        <mesh position={[0, 0.9, 0]}>
-          <cylinderGeometry args={[0.72, 0.72, 0.12, 16]} />
-          <meshStandardMaterial color="#4b5563" metalness={0.5} roughness={0.5} />
-        </mesh>
+        <MarmitaModel active={marmitaActive} status={equipment.marmita.status} />
         {marmitaActive && <pointLight position={[0, 1.5, 0]} intensity={0.4} color="#ef4444" distance={3} />}
         <Html position={[0, -1.3, 0]} center>
           <div style={{ color: '#fca5a5', fontSize: '10px', whiteSpace: 'nowrap', textAlign: 'center', pointerEvents: 'none', lineHeight: 1.4 }}>
