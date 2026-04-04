@@ -11,6 +11,7 @@ import { HornoPanel } from './panels/HornoPanel'
 import { HammerMillPanel } from './panels/HammerMillPanel'
 import { MolassesTankPanel } from './panels/MolassesTankPanel'
 import { PeristalticPumpPanel } from './panels/PeristalticPumpPanel'
+import { DissolutionTankPanel } from './panels/DissolutionTankPanel'
 
 // ── Config de fases ───────────────────────────────────────────────────────────
 const PHASES = [
@@ -264,11 +265,16 @@ export function MachineControls() {
         <PeristalticPumpPanel onClose={() => setSelected(null)} />
       )}
 
+      {/* Panel específico: Batea de Disolución */}
+      {selected?.id === 'dissolution_tank' && (
+        <DissolutionTankPanel onClose={() => setSelected(null)} />
+      )}
+
       {/* Modal genérico para el resto de máquinas */}
       {selected && selected.id !== 'marmita' && selected.id !== 'rotary_dryer'
         && selected.id !== 'screw_conveyor' && selected.id !== 'rotary_kiln'
         && selected.id !== 'hammer_mill' && selected.id !== 'molasses_tank'
-        && selected.id !== 'peristaltic_pump' && (
+        && selected.id !== 'peristaltic_pump' && selected.id !== 'dissolution_tank' && (
         <MachineModal
           eq={equipment[selected.id as EquipmentId]}
           onClose={() => setSelected(null)}
