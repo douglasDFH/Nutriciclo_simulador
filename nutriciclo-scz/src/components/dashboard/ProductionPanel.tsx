@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
 import { BLOCK_FORMULA } from '../../simulation/types'
-import { CheckCircle, AlertTriangle, XCircle, Package, Clock, TrendingUp, FlaskConical, BookOpen } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, Package, Clock, TrendingUp, FlaskConical, BookOpen, Droplets } from 'lucide-react'
 import { clsx } from 'clsx'
 import { RecetasModal } from './RecetasModal'
+import { MateriaPrimaModal } from './MateriaPrimaModal'
 
 // ─── Sub-proceso de harinas ───────────────────────────────────────────────────
 const SUB_PROCESSES = [
@@ -11,8 +12,8 @@ const SUB_PROCESSES = [
     key: 'hueso',
     label: 'Harina de Hueso',
     status: 'ok' as const,
-    equipment: 'Horno CITIC HIC → Transportador WAM → Molino RICHI 9FQ',
-    desc: 'Calcinación de huesos crudos a 500–600°C por 4 h. Proceso modelado y simulado.',
+    equipment: 'Transportador WAM TSC-250 → Horno CITIC HIC RK-Series → Molino RICHI 9FQ',
+    desc: 'Flujo completo implementado. Sensor boneFlourRate activo: hasta ~120 kg/h cuando los 3 equipos están encendidos y horno ≥ 400°C. Rendimiento crece con temperatura (óptimo 500–600°C). Calcinación 4 h → fosfato de calcio.',
     color: 'text-green-400',
     border: 'border-green-800',
     bg: 'bg-green-950/20',
@@ -47,9 +48,10 @@ const STATUS_ICON = {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export function ProductionPanel() {
-  const { productionPlan, blocksProduced, sensors, running, setProductionPlan, equipment } = useSimulatorStore()
+  const { productionPlan, blocksProduced, sensors, running, setProductionPlan, equipment, params, flourStocks } = useSimulatorStore()
   const [inputBlocks, setInputBlocks] = useState(String(productionPlan.targetBlocks))
   const [showRecetas, setShowRecetas] = useState(false)
+  const [showMateriaPrima, setShowMateriaPrima] = useState(false)
 
   const { targetBlocks, blockWeightKg } = productionPlan
   const totalKg        = targetBlocks * blockWeightKg
@@ -68,17 +70,27 @@ export function ProductionPanel() {
   return (
     <div className="p-3 space-y-4 overflow-y-auto">
 
-      {/* Modal de recetas */}
-      {showRecetas && <RecetasModal onClose={() => setShowRecetas(false)} />}
+      {/* Modales */}
+      {showRecetas      && <RecetasModal      onClose={() => setShowRecetas(false)} />}
+      {showMateriaPrima && <MateriaPrimaModal onClose={() => setShowMateriaPrima(false)} />}
 
-      {/* ── Botón Guía de Producción ── */}
-      <button
-        onClick={() => setShowRecetas(true)}
-        className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-green-900/40 hover:bg-green-800/60 border border-green-700 hover:border-green-500 rounded-lg text-green-400 hover:text-green-300 text-sm font-semibold transition-all"
-      >
-        <BookOpen className="w-4 h-4" />
-        Guía de Producción — Conversiones y Receta del Bloque
-      </button>
+      {/* ── Botones superiores ── */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setShowMateriaPrima(true)}
+          className="flex items-center justify-center gap-2 py-2 px-3 bg-blue-900/40 hover:bg-blue-800/60 border border-blue-700 hover:border-blue-500 rounded-lg text-blue-400 hover:text-blue-300 text-sm font-semibold transition-all"
+        >
+          <Droplets className="w-4 h-4" />
+          Materia Prima
+        </button>
+        <button
+          onClick={() => setShowRecetas(true)}
+          className="flex items-center justify-center gap-2 py-2 px-3 bg-green-900/40 hover:bg-green-800/60 border border-green-700 hover:border-green-500 rounded-lg text-green-400 hover:text-green-300 text-sm font-semibold transition-all"
+        >
+          <BookOpen className="w-4 h-4" />
+          Guía de Producción
+        </button>
+      </div>
 
       {/* ── Plan de producción ── */}
       <section className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 space-y-3">
@@ -157,33 +169,43 @@ export function ProductionPanel() {
         </div>
 
         {/* Harinas sub-proceso */}
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-700">
-          <div className="bg-red-950/30 border border-red-800 rounded p-2 text-center">
-            <div className="text-xs text-red-400 font-semibold">Harina de Sangre</div>
-            <div className="font-mono text-sm font-bold text-red-300">
-              {sensors.bloodFlourRate > 0
-                ? `${sensors.bloodFlourRate.toFixed(1)} kg/h`
-                : <span className="text-gray-600">Equipos OFF</span>}
-            </div>
-            <div className="text-xs text-gray-600">
-              {equipment.marmita.active && equipment.rotary_dryer.active && equipment.hammer_mill.active
-                ? '● Marmita + Secador + Molino'
-                : 'Requiere: Marmita + Secador + Molino'}
-            </div>
-          </div>
-          <div className="bg-lime-950/30 border border-lime-800 rounded p-2 text-center">
-            <div className="text-xs text-lime-400 font-semibold">Harina BSF</div>
-            <div className="font-mono text-sm font-bold text-lime-300">
-              {sensors.bsfFlourRate > 0
-                ? `${sensors.bsfFlourRate.toFixed(1)} kg/h`
-                : <span className="text-gray-600">Equipos OFF</span>}
-            </div>
-            <div className="text-xs text-gray-600">
-              {equipment.bsf_bioreactor.active && equipment.bsf_dryer.active && equipment.bsf_mill.active
-                ? '● Biorreactor + Secador + Molino BSF'
-                : 'Requiere: Biorreactor + Sec. + Molino BSF'}
-            </div>
-          </div>
+        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-gray-700">
+          <HarinaCard
+            label="Harina de Sangre"
+            stockKg={flourStocks.bloodFlourKg}
+            active={equipment.marmita.active && equipment.rotary_dryer.active && equipment.hammer_mill.active}
+            warming={false}
+            equipLabel="Marmita + Sec. + Molino"
+            warmingLabel=""
+            accentStock="text-red-400"
+            border="border-red-800"
+            bg="bg-red-950/30"
+            barColor="bg-red-500"
+          />
+          <HarinaCard
+            label="Harina de Hueso"
+            stockKg={flourStocks.boneFlourKg}
+            active={equipment.screw_conveyor.active && equipment.rotary_kiln.active && equipment.hammer_mill.active}
+            warming={equipment.screw_conveyor.active && equipment.rotary_kiln.active && equipment.hammer_mill.active && sensors.boneFlourRate === 0}
+            equipLabel={`Sinfín + Horno + Molino (${params.calcinationTemp}°C)`}
+            warmingLabel="Calentando…"
+            accentStock="text-yellow-400"
+            border="border-yellow-800"
+            bg="bg-yellow-950/30"
+            barColor="bg-yellow-500"
+          />
+          <HarinaCard
+            label="Harina BSF"
+            stockKg={flourStocks.bsfFlourKg}
+            active={equipment.bsf_bioreactor.active && equipment.bsf_dryer.active && equipment.bsf_mill.active}
+            warming={false}
+            equipLabel="Biorreactor + Sec. + Molino"
+            warmingLabel=""
+            accentStock="text-lime-400"
+            border="border-lime-800"
+            bg="bg-lime-950/30"
+            barColor="bg-lime-500"
+          />
         </div>
       </section>
 
@@ -281,6 +303,46 @@ function KPI({ icon, label, value, color }: { icon: React.ReactNode; label: stri
       <div className="flex justify-center text-gray-500 mb-0.5">{icon}</div>
       <div className="text-gray-500 text-xs">{label}</div>
       <div className={clsx('font-mono text-sm font-bold', color)}>{value}</div>
+    </div>
+  )
+}
+
+interface HarinaCardProps {
+  label: string
+  stockKg: number
+  active: boolean
+  warming: boolean
+  equipLabel: string
+  warmingLabel: string
+  accentStock: string
+  border: string
+  bg: string
+  barColor: string
+}
+function HarinaCard({ label, stockKg, active, warming, equipLabel, warmingLabel, accentStock, border, bg, barColor }: HarinaCardProps) {
+  const STOCK_CAP = 400
+  const pct = Math.min(100, (stockKg / STOCK_CAP) * 100)
+  const low = stockKg < 5
+  return (
+    <div className={clsx('rounded p-2 text-center', border, bg, 'border')}>
+      <div className={clsx('text-xs font-semibold', accentStock)}>{label}</div>
+      <div className="text-xs text-gray-600 leading-tight mt-0.5">
+        {warming
+          ? <span className="text-yellow-600">{warmingLabel}</span>
+          : active ? `● ${equipLabel}` : equipLabel}
+      </div>
+      {/* Stock */}
+      <div className="mt-1.5 pt-1.5 border-t border-gray-700/50">
+        <div className={clsx('font-mono text-sm font-bold', low ? 'text-red-400' : accentStock)}>
+          {stockKg.toFixed(0)} kg
+        </div>
+        <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden mt-0.5">
+          <div
+            className={clsx('h-full rounded-full transition-all duration-500', low ? 'bg-red-500' : barColor)}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
     </div>
   )
 }

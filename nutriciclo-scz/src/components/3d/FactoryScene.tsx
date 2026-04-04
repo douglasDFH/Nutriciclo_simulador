@@ -41,10 +41,10 @@ function SceneContent({ selectedPhase }: { selectedPhase: PhaseId | null }) {
       />
 
       {/* Mostrar solo la fase seleccionada (o todas si ninguna está seleccionada) */}
-      {show('phase1')  && <Phase1Equipment  hideLabels={selectedPhase !== null} />}
-      {show('phase2')  && <Phase2Equipment  hideLabels={selectedPhase !== null} />}
-      {show('phase3')  && <Phase3Equipment  hideLabels={selectedPhase !== null} />}
-      {show('subproc') && <BSFSubProcess    hideLabels={selectedPhase !== null} />}
+      {show('phase1')  && <Phase1Equipment />}
+      {show('phase2')  && <Phase2Equipment />}
+      {show('phase3')  && <Phase3Equipment />}
+      {show('subproc') && <BSFSubProcess />}
 
       {/* Flujo de materiales solo en vista completa */}
       {selectedPhase === null && <MaterialFlow />}

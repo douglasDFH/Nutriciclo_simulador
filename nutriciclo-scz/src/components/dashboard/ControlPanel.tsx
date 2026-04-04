@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MonitoringCharts } from './MonitoringCharts'
+import { MachineControls } from './MachineControls'
 import { ScenarioControls } from './ScenarioControls'
 import { AlertsPanel } from './AlertsPanel'
 import { ProductionPanel } from './ProductionPanel'
@@ -79,7 +80,7 @@ export function ControlPanel() {
 
       {/* Contenido de la pestaña activa */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'monitor'    && <MonitoringCharts />}
+        {activeTab === 'monitor'    && <><MachineControls /><MonitoringCharts /></>}
         {activeTab === 'production' && <ProductionPanel />}
         {activeTab === 'scenario'   && <ScenarioControls />}
         {activeTab === 'alerts'     && <AlertsPanel />}

@@ -45,6 +45,30 @@ export interface Equipment {
   specs: EquipmentSpec
 }
 
+export interface RawMaterials {
+  bloodStockL: number      // litros de sangre fresca disponibles
+  boneStockKg: number      // kg de hueso crudo disponibles
+  wasteStockKg: number     // kg de desperdicio de matadero (alimenta biorreactor)
+  larvaeStockKg: number    // kg de larvas listas en biorreactor (generado internamente)
+}
+
+export interface FlourStocks {
+  bloodFlourKg: number     // kg de harina de sangre acumulados
+  boneFlourKg: number      // kg de harina de hueso acumulados
+  bsfFlourKg: number       // kg de harina BSF acumulados
+}
+
+// Insumos externos comprados — se consumen por bloque producido
+export interface ExternalMaterials {
+  melazaKg: number          // Melaza de caña        30% → 7.50 kg/bloque
+  cascarillaKg: number      // Cascarilla de arroz   10% → 2.50 kg/bloque
+  afrechoSoyaKg: number     // Afrecho de soya       15% → 3.75 kg/bloque
+  ureaKg: number            // Urea agrícola         10% → 2.50 kg/bloque
+  calVivaKg: number         // Cal viva (CaO)        10% → 2.50 kg/bloque
+  salMineralizadaKg: number // Sal mineralizada       5% → 1.25 kg/bloque
+  azufreKg: number          // Azufre                 1% → 0.25 kg/bloque
+}
+
 export interface SimulationParameters {
   calcinationTemp: number       // 500–600 °C
   grindingRPM: number           // 1500–3000
@@ -62,6 +86,7 @@ export interface SensorReadings {
   mixViscosity: number          // cP
   productionRate: number        // kg/h
   bloodFlourRate: number        // kg/h — harina de sangre producida
+  boneFlourRate: number         // kg/h — harina de hueso producida
   bsfFlourRate: number          // kg/h — harina BSF producida
 }
 
@@ -113,6 +138,9 @@ export interface SimulatorState {
   tick: number
   productionPlan: ProductionPlan
   blocksProduced: number
+  rawMaterials: RawMaterials
+  flourStocks: FlourStocks
+  externalMaterials: ExternalMaterials
   setParam: <K extends keyof SimulationParameters>(key: K, value: SimulationParameters[K]) => void
   toggleEquipment: (id: EquipmentId) => void
   toggleDarkMode: () => void
@@ -121,4 +149,6 @@ export interface SimulatorState {
   clearAlerts: () => void
   reset: () => void
   setProductionPlan: (plan: Partial<ProductionPlan>) => void
+  addRawMaterial: (key: 'bloodStockL' | 'boneStockKg' | 'wasteStockKg', amount: number) => void
+  addExternalMaterial: (key: keyof ExternalMaterials, amount: number) => void
 }

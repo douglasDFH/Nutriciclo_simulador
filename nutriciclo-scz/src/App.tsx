@@ -6,7 +6,7 @@ import { useSimulatorStore } from './store/useSimulatorStore'
 import { Leaf } from 'lucide-react'
 
 export default function App() {
-  const { darkMode, tick_simulation, running } = useSimulatorStore()
+  const { darkMode, tick_simulation, running, equipment } = useSimulatorStore()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Apply dark mode class
@@ -14,9 +14,14 @@ export default function App() {
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
 
-  // Simulation loop: 1 tick per second
+  // El loop corre cuando hay equipos activos O cuando el plan de producción está corriendo.
+  // Los equipos solos consumen materia prima y producen harinas (sin necesidad de "Iniciar").
+  // "Iniciar Simulación" activa adicionalmente la producción de bloques.
+  const hasActiveEquipment = Object.values(equipment).some((e) => e.active)
+
   useEffect(() => {
-    if (running) {
+    const shouldRun = running || hasActiveEquipment
+    if (shouldRun) {
       intervalRef.current = setInterval(() => {
         tick_simulation()
       }, 1000)
@@ -29,7 +34,7 @@ export default function App() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [running, tick_simulation])
+  }, [running, hasActiveEquipment, tick_simulation])
 
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-gray-100 overflow-hidden">
@@ -67,13 +72,15 @@ export default function App() {
 }
 
 function RunningBadge() {
-  const { running, tick } = useSimulatorStore()
+  const { running, tick, equipment } = useSimulatorStore()
+  const hasActive = Object.values(equipment).some((e) => e.active)
+  const color  = running ? 'bg-green-400' : hasActive ? 'bg-yellow-400' : 'bg-gray-600'
+  const label  = running ? `Plan corriendo · T:${tick}` : hasActive ? `Equipos activos · T:${tick}` : 'Detenido'
+  const tcolor = running ? 'text-green-400' : hasActive ? 'text-yellow-400' : 'text-gray-500'
   return (
     <div className="flex items-center gap-1.5 text-xs">
-      <span className={`w-2 h-2 rounded-full ${running ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`} />
-      <span className={running ? 'text-green-400' : 'text-gray-500'}>
-        {running ? `T:${tick}` : 'Detenido'}
-      </span>
+      <span className={`w-2 h-2 rounded-full ${color} ${(running || hasActive) ? 'animate-pulse' : ''}`} />
+      <span className={tcolor}>{label}</span>
     </div>
   )
 }

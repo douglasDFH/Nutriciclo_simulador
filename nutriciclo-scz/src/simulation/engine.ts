@@ -69,6 +69,30 @@ export function calcBloodFlourRate(
 }
 
 /**
+ * Harina de Hueso: producida cuando Transportador Sinfín + Horno Rotatorio + Molino de Martillos activos.
+ * Datos reales:
+ *   - Calcinación 500–600°C por 4 h → fosfato de calcio (hidroxiapatita)
+ *   - Rendimiento: ~60–70% del peso de hueso crudo (pierde agua y materia orgánica)
+ *   - Por debajo de 400°C la calcinación no es efectiva
+ *   - Capacidad horno RK-Series: 1–5 t/h de hueso
+ *   - Base simulación: ~120 kg/h a temperatura óptima (500–600°C)
+ */
+export function calcBoneFlourRate(
+  conveyorActive: boolean,
+  kilnActive: boolean,
+  millActive: boolean,
+  kilnTemp: number
+): number {
+  if (!conveyorActive || !kilnActive || !millActive) return 0
+  if (kilnTemp < 400) return 0
+  // Factor de temperatura: efectividad crece de 400°C a 550°C (óptimo)
+  const tempFactor = Math.min(1, (kilnTemp - 400) / 150)
+  const base = 120 * tempFactor
+  const noise = (Math.random() - 0.5) * 10
+  return Math.max(0, base + noise)
+}
+
+/**
  * Harina BSF (Hermetia illucens): cuando Biorreactor + Secador BSF + Molino BSF activos.
  * Datos reales literatura científica (Scielo, IIAP):
  *   - Rendimiento larva fresca → harina: 25–35% (prom. 30%)
@@ -107,6 +131,7 @@ export function simulationStep(
 ): SensorReadings {
   const kilnActive        = activeEquipment.has('rotary_kiln')
   const dryerActive       = activeEquipment.has('rotary_dryer')
+  const conveyorActive    = activeEquipment.has('screw_conveyor')
   const ribbonMixerActive = activeEquipment.has('ribbon_mixer')
   const pumpActive        = activeEquipment.has('peristaltic_pump')
   const limeActive        = activeEquipment.has('lime_dosifier')
@@ -118,8 +143,10 @@ export function simulationStep(
   const bsfMillActive     = activeEquipment.has('bsf_mill')
   const activeCount       = activeEquipment.size
 
+  const kilnTemp = calcKilnTemp(prev.kilnTemp, params.calcinationTemp, kilnActive)
+
   return {
-    kilnTemp:           calcKilnTemp(prev.kilnTemp, params.calcinationTemp, kilnActive),
+    kilnTemp,
     dryerTemp:          calcDryerTemp(prev.dryerTemp, dryerActive),
     tankPressure:       calcTankPressure(params.molassesFlow, ribbonMixerActive, tick),
     molassesFlowActual: calcMolassesFlow(prev.molassesFlowActual, params.molassesFlow, pumpActive),
@@ -127,6 +154,7 @@ export function simulationStep(
     mixViscosity:       calcViscosity(prev.molassesFlowActual),
     productionRate:     calcProductionRate(params, activeCount),
     bloodFlourRate:     calcBloodFlourRate(marmitaActive, dryerActive, millActive),
+    boneFlourRate:      calcBoneFlourRate(conveyorActive, kilnActive, millActive, kilnTemp),
     bsfFlourRate:       calcBSFFlourRate(bioreactorActive, bsfDryerActive, bsfMillActive),
   }
 }

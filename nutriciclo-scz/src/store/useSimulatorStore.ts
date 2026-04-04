@@ -7,6 +7,9 @@ import type {
   Equipment,
   Alert,
   ProductionPlan,
+  RawMaterials,
+  FlourStocks,
+  ExternalMaterials,
 } from '../simulation/types'
 import { simulationStep, buildTimePoint } from '../simulation/engine'
 
@@ -127,7 +130,32 @@ const INITIAL_SENSORS = {
   mixViscosity: 100,
   productionRate: 0,
   bloodFlourRate: 0,
+  boneFlourRate: 0,
   bsfFlourRate: 0,
+}
+
+const INITIAL_RAW_MATERIALS: RawMaterials = {
+  bloodStockL:   500,   // 500 L de sangre fresca inicial
+  boneStockKg:   600,   // 600 kg de hueso crudo inicial
+  wasteStockKg:  300,   // 300 kg de desperdicio de matadero inicial
+  larvaeStockKg:  30,   // 30 kg de larvas en biorreactor al inicio
+}
+
+const INITIAL_FLOUR_STOCKS: FlourStocks = {
+  bloodFlourKg: 50,   // stock inicial pequeño para arrancar
+  boneFlourKg:  30,
+  bsfFlourKg:   15,
+}
+
+// Stocks externos iniciales ≈ suficiente para ~100 bloques de cada uno
+const INITIAL_EXTERNAL: ExternalMaterials = {
+  melazaKg:          750,   // 100 bloques × 7.50 kg
+  cascarillaKg:      250,   // 100 bloques × 2.50 kg
+  afrechoSoyaKg:     375,   // 100 bloques × 3.75 kg
+  ureaKg:            250,   // 100 bloques × 2.50 kg
+  calVivaKg:         250,   // 100 bloques × 2.50 kg
+  salMineralizadaKg: 125,   // 100 bloques × 1.25 kg
+  azufreKg:           25,   // 100 bloques × 0.25 kg
 }
 
 const INITIAL_PLAN: ProductionPlan = {
@@ -180,6 +208,9 @@ export const useSimulatorStore = create<SimulatorState>()(
     tick: 0,
     productionPlan: INITIAL_PLAN,
     blocksProduced: 0,
+    rawMaterials: { ...INITIAL_RAW_MATERIALS },
+    flourStocks: { ...INITIAL_FLOUR_STOCKS },
+    externalMaterials: { ...INITIAL_EXTERNAL },
 
     setParam: (key, value) =>
       set((state) => {
@@ -207,6 +238,16 @@ export const useSimulatorStore = create<SimulatorState>()(
         state.productionPlan = { ...state.productionPlan, ...plan }
       }),
 
+    addRawMaterial: (key, amount) =>
+      set((state) => {
+        state.rawMaterials[key] = state.rawMaterials[key] + Math.max(0, amount)
+      }),
+
+    addExternalMaterial: (key, amount) =>
+      set((state) => {
+        state.externalMaterials[key] = state.externalMaterials[key] + Math.max(0, amount)
+      }),
+
     reset: () =>
       set(() => ({
         params: { ...INITIAL_PARAMS },
@@ -219,60 +260,229 @@ export const useSimulatorStore = create<SimulatorState>()(
         running: false,
         tick: 0,
         blocksProduced: 0,
+        rawMaterials: { ...INITIAL_RAW_MATERIALS },
+        flourStocks: { ...INITIAL_FLOUR_STOCKS },
+        externalMaterials: { ...INITIAL_EXTERNAL },
       })),
 
     tick_simulation: () =>
       set((state) => {
-        if (!state.running) return
+        const activeSet = new Set<string>(
+          Object.values(state.equipment).filter((e) => e.active).map((e) => e.id)
+        )
+        const hasActive = activeSet.size > 0
+
+        // Salir solo si no hay equipos activos Y la producción está detenida
+        if (!hasActive && !state.running) return
 
         const tick = state.tick + 1
         state.tick = tick
 
-        const activeSet = new Set<string>(
-          Object.values(state.equipment).filter((e) => e.active).map((e) => e.id)
-        )
-
+        // ── 1. Sensores base — siempre que haya equipos encendidos ─────────
         const newSensors = simulationStep(state.sensors, state.params, activeSet, tick)
+
+        // ── 2. Limitar tasas de harina por disponibilidad de materia prima ─
+        const bloodAvailable  = state.rawMaterials.bloodStockL   > 0
+        const boneAvailable   = state.rawMaterials.boneStockKg   > 0
+        const larvaeAvailable = state.rawMaterials.larvaeStockKg > 0
+
+        if (!bloodAvailable)  newSensors.bloodFlourRate = 0
+        if (!boneAvailable)   newSensors.boneFlourRate  = 0
+        if (!larvaeAvailable) newSensors.bsfFlourRate   = 0
+
         state.sensors = newSensors
 
+        // ── 3. Consumir materia prima por tick (1 tick = 1 s) ─────────────
+        // Sangre: rendimiento 19%, densidad sangre 1.05 kg/L
+        // → L/h = (kg harina/h) / 0.19 / 1.05
+        if (bloodAvailable && newSensors.bloodFlourRate > 0) {
+          const consume = newSensors.bloodFlourRate / 0.19 / 1.05 / 3600
+          state.rawMaterials.bloodStockL = Math.max(0, state.rawMaterials.bloodStockL - consume)
+        }
+        // Hueso crudo: rendimiento 60% (calcina y pierde agua + materia orgánica)
+        if (boneAvailable && newSensors.boneFlourRate > 0) {
+          const consume = newSensors.boneFlourRate / 0.60 / 3600
+          state.rawMaterials.boneStockKg = Math.max(0, state.rawMaterials.boneStockKg - consume)
+        }
+        // Desperdicio de matadero → biorreactor genera larvas (conversión 20%)
+        // Biorreactor procesa ~72 kg/h de desperdicio cuando está activo
+        if (activeSet.has('bsf_bioreactor')) {
+          const wasteConsume = Math.min(72 / 3600, state.rawMaterials.wasteStockKg)
+          state.rawMaterials.wasteStockKg   = Math.max(0, state.rawMaterials.wasteStockKg - wasteConsume)
+          const larvaeProduced = wasteConsume * 0.20
+          state.rawMaterials.larvaeStockKg  = Math.min(500, state.rawMaterials.larvaeStockKg + larvaeProduced)
+        }
+        // Larvas → harina BSF: rendimiento 30%
+        // → kg larvas/h = (kg harina/h) / 0.30
+        if (larvaeAvailable && newSensors.bsfFlourRate > 0) {
+          const consume = newSensors.bsfFlourRate / 0.30 / 3600
+          state.rawMaterials.larvaeStockKg = Math.max(0, state.rawMaterials.larvaeStockKg - consume)
+        }
+
+        // ── 4. Acumular stocks de harinas ─────────────────────────────────
+        state.flourStocks.bloodFlourKg += newSensors.bloodFlourRate / 3600
+        state.flourStocks.boneFlourKg  += newSensors.boneFlourRate  / 3600
+        state.flourStocks.bsfFlourKg   += newSensors.bsfFlourRate   / 3600
+
+        // ── 5. Producción de bloques — SOLO cuando el plan está iniciado ──
+        // (running = true). Los equipos de fase 1 y subprocesos funcionan
+        // independientemente; la fase 2+3 requiere que el operador pulse Iniciar.
+        if (state.running) {
+          const kgPerTick     = newSensors.productionRate / 3600
+          const blocksPerTick = kgPerTick / state.productionPlan.blockWeightKg
+
+          // Necesidades por tick — harinas internas
+          const bloodNeed  = blocksPerTick * 25 * 0.10
+          const boneNeed   = blocksPerTick * 25 * 0.05
+          const bsfNeed    = blocksPerTick * 25 * 0.04
+          // Necesidades por tick — insumos externos
+          const melazaNeed  = blocksPerTick * 25 * 0.30
+          const cascNeed    = blocksPerTick * 25 * 0.10
+          const afrechoNeed = blocksPerTick * 25 * 0.15
+          const ureaNeed    = blocksPerTick * 25 * 0.10
+          const calNeed     = blocksPerTick * 25 * 0.10
+          const salNeed     = blocksPerTick * 25 * 0.05
+          const azufreNeed  = blocksPerTick * 25 * 0.01
+
+          const canProduceBlocks =
+            state.flourStocks.bloodFlourKg            >= bloodNeed   &&
+            state.flourStocks.boneFlourKg             >= boneNeed    &&
+            state.flourStocks.bsfFlourKg              >= bsfNeed     &&
+            state.externalMaterials.melazaKg          >= melazaNeed  &&
+            state.externalMaterials.cascarillaKg      >= cascNeed    &&
+            state.externalMaterials.afrechoSoyaKg     >= afrechoNeed &&
+            state.externalMaterials.ureaKg            >= ureaNeed    &&
+            state.externalMaterials.calVivaKg         >= calNeed     &&
+            state.externalMaterials.salMineralizadaKg >= salNeed     &&
+            state.externalMaterials.azufreKg          >= azufreNeed
+
+          if (canProduceBlocks) {
+            state.flourStocks.bloodFlourKg            = Math.max(0, state.flourStocks.bloodFlourKg            - bloodNeed)
+            state.flourStocks.boneFlourKg             = Math.max(0, state.flourStocks.boneFlourKg             - boneNeed)
+            state.flourStocks.bsfFlourKg              = Math.max(0, state.flourStocks.bsfFlourKg              - bsfNeed)
+            state.externalMaterials.melazaKg          = Math.max(0, state.externalMaterials.melazaKg          - melazaNeed)
+            state.externalMaterials.cascarillaKg      = Math.max(0, state.externalMaterials.cascarillaKg      - cascNeed)
+            state.externalMaterials.afrechoSoyaKg     = Math.max(0, state.externalMaterials.afrechoSoyaKg     - afrechoNeed)
+            state.externalMaterials.ureaKg            = Math.max(0, state.externalMaterials.ureaKg            - ureaNeed)
+            state.externalMaterials.calVivaKg         = Math.max(0, state.externalMaterials.calVivaKg         - calNeed)
+            state.externalMaterials.salMineralizadaKg = Math.max(0, state.externalMaterials.salMineralizadaKg - salNeed)
+            state.externalMaterials.azufreKg          = Math.max(0, state.externalMaterials.azufreKg          - azufreNeed)
+
+            state.blocksProduced = Math.min(
+              state.blocksProduced + blocksPerTick,
+              state.productionPlan.targetBlocks
+            )
+          }
+
+          // Alerta de insumos para el plan de producción
+          if (tick % 5 === 0 && !canProduceBlocks && newSensors.productionRate > 0) {
+            state.alerts = [{
+              id: `insumo-short-${tick}`, timestamp: new Date(), type: 'warning',
+              message: 'Producción de bloques pausada: algún insumo agotado — revisa Materia Prima',
+              parameter: 'flourStocks', value: 0,
+            }, ...state.alerts].slice(0, 50)
+          }
+        }
+
+        // ── 6. Time series ─────────────────────────────────────────────────
         const point = buildTimePoint(tick, newSensors)
         state.timeSeries = [...state.timeSeries.slice(-59), point]
 
-        // Acumular bloques producidos (1 tick = 1 segundo)
-        // productionRate está en kg/h → kg/s = /3600 → bloques/s = /blockWeightKg
-        const kgPerTick = newSensors.productionRate / 3600
-        const blocksPerTick = kgPerTick / state.productionPlan.blockWeightKg
-        state.blocksProduced = Math.min(
-          state.blocksProduced + blocksPerTick,
-          state.productionPlan.targetBlocks
-        )
-
-        // Update equipment status based on sensors
+        // ── 7. Estado de equipos ───────────────────────────────────────────
         if (state.equipment.rotary_kiln.active) {
-          if (newSensors.kilnTemp > 620) state.equipment.rotary_kiln.status = 'error'
+          if (newSensors.kilnTemp > 620)      state.equipment.rotary_kiln.status = 'error'
           else if (newSensors.kilnTemp > 600) state.equipment.rotary_kiln.status = 'warning'
-          else state.equipment.rotary_kiln.status = 'active'
+          else                                state.equipment.rotary_kiln.status = 'active'
+        }
+        if (state.equipment.screw_conveyor.active) {
+          if (state.equipment.rotary_kiln.active && newSensors.kilnTemp < 400)
+            state.equipment.screw_conveyor.status = 'warning'
+          else
+            state.equipment.screw_conveyor.status = 'active'
+        }
+        if (state.equipment.marmita.active) {
+          state.equipment.marmita.status = bloodAvailable ? 'active' : 'warning'
+        }
+        if (state.equipment.bsf_bioreactor.active) {
+          state.equipment.bsf_bioreactor.status =
+            state.rawMaterials.wasteStockKg > 0 ? 'active' : 'warning'
         }
         if (state.equipment.rotary_dryer.active) {
           if (newSensors.dryerTemp > 130) state.equipment.rotary_dryer.status = 'warning'
-          else state.equipment.rotary_dryer.status = 'active'
+          else                            state.equipment.rotary_dryer.status = 'active'
         }
         if (state.equipment.ribbon_mixer.active) {
-          if (newSensors.tankPressure > 50) state.equipment.ribbon_mixer.status = 'error'
+          if (newSensors.tankPressure > 50)      state.equipment.ribbon_mixer.status = 'error'
           else if (newSensors.tankPressure > 40) state.equipment.ribbon_mixer.status = 'warning'
-          else state.equipment.ribbon_mixer.status = 'active'
+          else                                   state.equipment.ribbon_mixer.status = 'active'
         }
         if (state.equipment.paddle_mixer.active) {
           if (newSensors.exothermicTemp > 180) state.equipment.paddle_mixer.status = 'warning'
-          else state.equipment.paddle_mixer.status = 'active'
+          else                                 state.equipment.paddle_mixer.status = 'active'
         }
 
-        // Alerts every 5th tick
+        // ── 8. Alertas (cada 5 ticks) ──────────────────────────────────────
         if (tick % 5 === 0) {
-          const newAlerts = checkAlerts(newSensors, tick)
-          if (newAlerts.length > 0) {
-            state.alerts = [...newAlerts, ...state.alerts].slice(0, 50)
+          const ts = new Date()
+          const newAlerts: Alert[] = [...checkAlerts(newSensors, tick)]
+
+          // Alertas de materia prima
+          const bloodConsumeH = newSensors.bloodFlourRate / 0.19 / 1.05
+          const boneConsumeH  = newSensors.boneFlourRate  / 0.60
+          const wasteConsumeH = activeSet.has('bsf_bioreactor') ? 72 : 0
+
+          if (bloodConsumeH > 0) {
+            const h = state.rawMaterials.bloodStockL / bloodConsumeH
+            if (h < 0.25)
+              newAlerts.push({ id: `blood-crit-${tick}`, timestamp: ts, type: 'error',
+                message: `Sin sangre en ${(h * 60).toFixed(0)} min — recarga en modal Materia Prima`,
+                parameter: 'bloodStock', value: state.rawMaterials.bloodStockL })
+            else if (h < 1)
+              newAlerts.push({ id: `blood-low-${tick}`, timestamp: ts, type: 'warning',
+                message: `Stock sangre bajo: ${state.rawMaterials.bloodStockL.toFixed(0)} L (~${h.toFixed(1)} h)`,
+                parameter: 'bloodStock', value: state.rawMaterials.bloodStockL })
           }
+          if (boneConsumeH > 0) {
+            const h = state.rawMaterials.boneStockKg / boneConsumeH
+            if (h < 0.25)
+              newAlerts.push({ id: `bone-crit-${tick}`, timestamp: ts, type: 'error',
+                message: `Sin hueso en ${(h * 60).toFixed(0)} min — recarga en modal Materia Prima`,
+                parameter: 'boneStock', value: state.rawMaterials.boneStockKg })
+            else if (h < 1)
+              newAlerts.push({ id: `bone-low-${tick}`, timestamp: ts, type: 'warning',
+                message: `Stock hueso bajo: ${state.rawMaterials.boneStockKg.toFixed(0)} kg (~${h.toFixed(1)} h)`,
+                parameter: 'boneStock', value: state.rawMaterials.boneStockKg })
+          }
+          if (wasteConsumeH > 0) {
+            const h = state.rawMaterials.wasteStockKg / wasteConsumeH
+            if (h < 0.5)
+              newAlerts.push({ id: `waste-low-${tick}`, timestamp: ts, type: 'warning',
+                message: `Desperdicio matadero bajo: ${state.rawMaterials.wasteStockKg.toFixed(0)} kg — biorreactor BSF se detendrá`,
+                parameter: 'wasteStock', value: state.rawMaterials.wasteStockKg })
+          }
+          // Alertas insumos externos bajos (< 20 bloques restantes)
+          const extAlerts: Array<[string, number, string]> = [
+            ['melaza',       state.externalMaterials.melazaKg          / 7.50, 'Melaza de caña'],
+            ['cascarilla',   state.externalMaterials.cascarillaKg      / 2.50, 'Cascarilla de arroz'],
+            ['afrecho',      state.externalMaterials.afrechoSoyaKg     / 3.75, 'Afrecho de soya'],
+            ['urea',         state.externalMaterials.ureaKg            / 2.50, 'Urea agrícola'],
+            ['cal',          state.externalMaterials.calVivaKg         / 2.50, 'Cal viva'],
+            ['sal',          state.externalMaterials.salMineralizadaKg / 1.25, 'Sal mineralizada'],
+            ['azufre',       state.externalMaterials.azufreKg          / 0.25, 'Azufre'],
+          ]
+          for (const [key, blocksLeft, name] of extAlerts) {
+            if (blocksLeft < 1)
+              newAlerts.push({ id: `ext-crit-${key}-${tick}`, timestamp: ts, type: 'error',
+                message: `Sin ${name} — producción de bloques pausada`,
+                parameter: key, value: blocksLeft })
+            else if (blocksLeft < 15)
+              newAlerts.push({ id: `ext-low-${key}-${tick}`, timestamp: ts, type: 'warning',
+                message: `${name} bajo: ~${Math.floor(blocksLeft)} bloques restantes`,
+                parameter: key, value: blocksLeft })
+          }
+
+          if (newAlerts.length > 0)
+            state.alerts = [...newAlerts, ...state.alerts].slice(0, 50)
         }
       }),
   }))
