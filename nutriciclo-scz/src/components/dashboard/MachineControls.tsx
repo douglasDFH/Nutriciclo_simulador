@@ -14,6 +14,8 @@ import { PeristalticPumpPanel } from './panels/PeristalticPumpPanel'
 import { DissolutionTankPanel } from './panels/DissolutionTankPanel'
 import { TransferPumpPanel } from './panels/TransferPumpPanel'
 import { RibbonMixerPanel } from './panels/RibbonMixerPanel'
+import { PaddleMixerPanel } from './panels/PaddleMixerPanel'
+import { LimeDosifierPanel } from './panels/LimeDosifierPanel'
 
 // ── Config de fases ───────────────────────────────────────────────────────────
 const PHASES = [
@@ -282,12 +284,23 @@ export function MachineControls() {
         <RibbonMixerPanel onClose={() => setSelected(null)} />
       )}
 
+      {/* Panel específico: Mezcladora de Paletas Doble Eje */}
+      {selected?.id === 'paddle_mixer' && (
+        <PaddleMixerPanel onClose={() => setSelected(null)} />
+      )}
+
+      {/* Panel específico: Dosificador de Cal Viva */}
+      {selected?.id === 'lime_dosifier' && (
+        <LimeDosifierPanel onClose={() => setSelected(null)} />
+      )}
+
       {/* Modal genérico para el resto de máquinas */}
       {selected && selected.id !== 'marmita' && selected.id !== 'rotary_dryer'
         && selected.id !== 'screw_conveyor' && selected.id !== 'rotary_kiln'
         && selected.id !== 'hammer_mill' && selected.id !== 'molasses_tank'
         && selected.id !== 'peristaltic_pump' && selected.id !== 'dissolution_tank'
-        && selected.id !== 'transfer_pump' && selected.id !== 'ribbon_mixer' && (
+        && selected.id !== 'transfer_pump' && selected.id !== 'ribbon_mixer'
+        && selected.id !== 'paddle_mixer' && selected.id !== 'lime_dosifier' && (
         <MachineModal
           eq={equipment[selected.id as EquipmentId]}
           onClose={() => setSelected(null)}
