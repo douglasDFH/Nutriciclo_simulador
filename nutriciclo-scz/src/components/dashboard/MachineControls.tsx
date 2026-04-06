@@ -16,6 +16,7 @@ import { TransferPumpPanel } from './panels/TransferPumpPanel'
 import { RibbonMixerPanel } from './panels/RibbonMixerPanel'
 import { PaddleMixerPanel } from './panels/PaddleMixerPanel'
 import { LimeDosifierPanel } from './panels/LimeDosifierPanel'
+import { VibratingTablePanel } from './panels/VibratingTablePanel'
 
 // ── Config de fases ───────────────────────────────────────────────────────────
 const PHASES = [
@@ -294,13 +295,19 @@ export function MachineControls() {
         <LimeDosifierPanel onClose={() => setSelected(null)} />
       )}
 
+      {/* Panel específico: Mesa Vibradora */}
+      {selected?.id === 'vibrating_table' && (
+        <VibratingTablePanel onClose={() => setSelected(null)} />
+      )}
+
       {/* Modal genérico para el resto de máquinas */}
       {selected && selected.id !== 'marmita' && selected.id !== 'rotary_dryer'
         && selected.id !== 'screw_conveyor' && selected.id !== 'rotary_kiln'
         && selected.id !== 'hammer_mill' && selected.id !== 'molasses_tank'
         && selected.id !== 'peristaltic_pump' && selected.id !== 'dissolution_tank'
         && selected.id !== 'transfer_pump' && selected.id !== 'ribbon_mixer'
-        && selected.id !== 'paddle_mixer' && selected.id !== 'lime_dosifier' && (
+        && selected.id !== 'paddle_mixer' && selected.id !== 'lime_dosifier'
+        && selected.id !== 'vibrating_table' && (
         <MachineModal
           eq={equipment[selected.id as EquipmentId]}
           onClose={() => setSelected(null)}
