@@ -19,23 +19,31 @@ const PHASE_CAMERA_TARGET: Record<string, [number, number, number]> = {
   subproc: [1,   0, -14],   // grupo en -4,  máquinas hasta +6, z=-18 → centro
 }
 
-function SceneContent({ selectedPhase }: { selectedPhase: PhaseId | null }) {
+function SceneContent({ selectedPhase, darkMode }: { selectedPhase: PhaseId | null; darkMode: boolean }) {
   const show = (phase: PhaseId) => selectedPhase === null || selectedPhase === phase
   const target = selectedPhase ? PHASE_CAMERA_TARGET[selectedPhase] : ([2, 0, 0] as [number, number, number])
 
   return (
     <>
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
-      <pointLight position={[-5, 5, -5]} intensity={0.5} color="#4ade80" />
-      <pointLight position={[0, 4, -10]} intensity={0.3} color="#a3e635" />
+      <ambientLight intensity={darkMode ? 0.3 : 0.8} />
+      <directionalLight position={[10, 10, 5]} intensity={darkMode ? 1 : 1.4} castShadow />
+      <pointLight position={[-5, 5, -5]} intensity={darkMode ? 0.5 : 0.3} color="#4ade80" />
+      <pointLight position={[0, 4, -10]} intensity={darkMode ? 0.3 : 0.2} color="#a3e635" />
+
+      {/* Piso gris sólido en modo claro */}
+      {!darkMode && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.51, 0]} receiveShadow>
+          <planeGeometry args={[200, 200]} />
+          <meshStandardMaterial color="#d4d8dd" />
+        </mesh>
+      )}
 
       {/* Ground grid */}
       <Grid
         args={[50, 50]}
         position={[0, -0.5, 0]}
-        cellColor="#1f2937"
-        sectionColor="#374151"
+        cellColor={darkMode ? '#1f2937' : '#b0b8c4'}
+        sectionColor={darkMode ? '#374151' : '#8a95a3'}
         fadeDistance={35}
         infiniteGrid
       />
@@ -57,7 +65,7 @@ function SceneContent({ selectedPhase }: { selectedPhase: PhaseId | null }) {
         maxDistance={70}
         target={target}
       />
-      <Environment preset="night" />
+      <Environment preset={darkMode ? 'night' : 'warehouse'} />
     </>
   )
 }
@@ -75,11 +83,11 @@ export function FactoryScene() {
       <Canvas
         shadows
         camera={{ position: [2, 28, 55], fov: 60 }}
-        style={{ background: darkMode ? '#030712' : '#0f172a' }}
+        style={{ background: darkMode ? '#030712' : '#e8ecf0' }}
         gl={{ antialias: true }}
       >
         <Suspense fallback={null}>
-          <SceneContent selectedPhase={selectedPhase} />
+          <SceneContent selectedPhase={selectedPhase} darkMode={darkMode} />
         </Suspense>
       </Canvas>
 
