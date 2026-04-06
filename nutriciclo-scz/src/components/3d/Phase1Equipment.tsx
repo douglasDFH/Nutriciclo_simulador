@@ -269,12 +269,50 @@ export function Phase1Equipment() {
 
   const dm = (id: string) => ({ id, onSelect: handleSelect, onHover: handleHover })
 
+  // Colores de flujo según equipos activos
+  const bloodFlow = equipment.marmita.active || equipment.rotary_dryer.active
+  const boneFlow  = equipment.screw_conveyor.active || equipment.rotary_kiln.active
+  const flourFlow = equipment.hammer_mill.active
+
   return (
     <group position={[-14, 0, 0]}>
-      <Text position={[5, 3.8, 0]} fontSize={0.4} color="#fca5a5" anchorX="center">
+
+      {/* ── Título ─────────────────────────────────────────────────────────── */}
+      <Text position={[5, 4.2, 0]} fontSize={0.38} color="#fca5a5" anchorX="center">
         FASE 1 — Preparación Intensiva
       </Text>
 
+      {/* ── Etiquetas de línea ─────────────────────────────────────────────── */}
+      <Text position={[-1.2, 0.8, 3]} fontSize={0.22} color="#f87171" anchorX="center" rotation={[0, 0, 0]}>
+        🩸 Línea Sangre
+      </Text>
+      <Text position={[-1.2, 0.8, -3]} fontSize={0.22} color="#fbbf24" anchorX="center">
+        🦴 Línea Huesos
+      </Text>
+
+      {/* ── Flechas de flujo — Línea Sangre (z=+3) ─────────────────────────── */}
+      {/* Marmita → Secador */}
+      <FlowArrow from={[1.8, 0.1, 3]} to={[4, 0.1, 3]} color={bloodFlow ? '#f87171' : '#374151'} active={bloodFlow} />
+      {/* Secador → Molino (diagonal) */}
+      <FlowArrow from={[6.8, 0.1, 3]} to={[9.2, 0.1, 0.6]} color={equipment.rotary_dryer.active ? '#fb923c' : '#374151'} active={equipment.rotary_dryer.active} />
+
+      {/* ── Flechas de flujo — Línea Huesos (z=-3) ─────────────────────────── */}
+      {/* Transportador → Horno */}
+      <FlowArrow from={[1.8, 0.1, -3]} to={[4, 0.1, -3]} color={boneFlow ? '#fbbf24' : '#374151'} active={boneFlow} />
+      {/* Horno → Molino (diagonal) */}
+      <FlowArrow from={[6.8, 0.1, -3]} to={[9.2, 0.1, -0.6]} color={equipment.rotary_kiln.active ? '#f97316' : '#374151'} active={equipment.rotary_kiln.active} />
+
+      {/* ── Etiqueta salida ────────────────────────────────────────────────── */}
+      <Text position={[11.5, 0.8, 0]} fontSize={0.2} color={flourFlow ? '#4ade80' : '#374151'} anchorX="center">
+        Harinas →
+      </Text>
+      <Text position={[11.5, 0.4, 0]} fontSize={0.16} color="#6b7280" anchorX="center">
+        Fase 2
+      </Text>
+
+      {/* ── Máquinas ───────────────────────────────────────────────────────── */}
+
+      {/* Línea Sangre */}
       <DraggableMachine {...dm('marmita')}>
         <MarmitaModel active={equipment.marmita.active} status={equipment.marmita.status} />
         {equipment.marmita.active && <pointLight position={[0,1.5,0]} intensity={0.4} color="#ef4444" distance={3} />}
@@ -289,6 +327,7 @@ export function Phase1Equipment() {
         <Tooltip id="rotary_dryer" />
       </DraggableMachine>
 
+      {/* Línea Huesos */}
       <DraggableMachine {...dm('screw_conveyor')}>
         <ScrewConveyorModel active={equipment.screw_conveyor.active} status={equipment.screw_conveyor.status} />
         <Tooltip id="screw_conveyor" />
@@ -302,10 +341,63 @@ export function Phase1Equipment() {
         <Tooltip id="rotary_kiln" />
       </DraggableMachine>
 
+      {/* Convergencia */}
       <DraggableMachine {...dm('hammer_mill')}>
         <HammerMillModel active={equipment.hammer_mill.active} status={equipment.hammer_mill.status} />
         <Tooltip id="hammer_mill" />
       </DraggableMachine>
+    </group>
+  )
+}
+
+// ── Flecha de flujo entre dos puntos ─────────────────────────────────────────
+function FlowArrow({
+  from, to, color, active,
+}: {
+  from: [number, number, number]
+  to:   [number, number, number]
+  color: string
+  active: boolean
+}) {
+  const [tick, setTick] = useState(0)
+  useFrame((_, delta) => { if (active) setTick(t => t + delta) })
+
+  const mid    = from.map((v, i) => (v + to[i]) / 2) as [number, number, number]
+  const dx     = to[0] - from[0]
+  const dz     = to[2] - from[2]
+  const length = Math.sqrt(dx * dx + dz * dz)
+  const angle  = Math.atan2(dx, dz)   // rotación en Y para apuntar de from→to
+
+  // Puntos animados que se deslizan por la flecha
+  const dots = [0, 1, 2]
+
+  return (
+    <group>
+      {/* Tubo base */}
+      <mesh position={mid} rotation={[0, angle, Math.PI / 2]}>
+        <cylinderGeometry args={[0.04, 0.04, length, 6]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={active ? 0.4 : 0} />
+      </mesh>
+
+      {/* Punta de flecha */}
+      <mesh position={[to[0] - dx / length * 0.3, to[1], to[2] - dz / length * 0.3]}
+        rotation={[0, angle, Math.PI / 2]}>
+        <coneGeometry args={[0.12, 0.35, 8]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={active ? 0.6 : 0} />
+      </mesh>
+
+      {/* Bolitas animadas (flujo) */}
+      {active && dots.map(i => {
+        const t = ((tick * 0.6 + i / 3) % 1)
+        const x = from[0] + dx * t
+        const z = from[2] + dz * t
+        return (
+          <mesh key={i} position={[x, from[1] + 0.08, z]}>
+            <sphereGeometry args={[0.07, 6, 6]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1} />
+          </mesh>
+        )
+      })}
     </group>
   )
 }
