@@ -3,13 +3,15 @@ import { useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import { Text, Html, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
-import type { Mesh } from 'three'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
 import { use3DStore } from '../../store/use3DStore'
 
 // ── Preload GLB ───────────────────────────────────────────────────────────────
 useGLTF.preload('/marmita.glb')
 useGLTF.preload('/rotary_dryer.glb')
+useGLTF.preload('/screw_conveyor.glb')
+useGLTF.preload('/rotary_kiln.glb')
+useGLTF.preload('/hammer%20mill.glb')
 
 // ── Emissive helper ───────────────────────────────────────────────────────────
 function applyEmissive(scene: THREE.Object3D, active: boolean, status: string) {
@@ -35,6 +37,27 @@ function MarmitaModel({ active, status }: { active: boolean; status: string }) {
 
 function RotaryDryerModel({ active, status }: { active: boolean; status: string }) {
   const { scene } = useGLTF('/rotary_dryer.glb')
+  const cloned = scene.clone()
+  applyEmissive(cloned, active, status)
+  return <primitive object={cloned} />
+}
+
+function ScrewConveyorModel({ active, status }: { active: boolean; status: string }) {
+  const { scene } = useGLTF('/screw_conveyor.glb')
+  const cloned = scene.clone()
+  applyEmissive(cloned, active, status)
+  return <primitive object={cloned} />
+}
+
+function RotaryKilnModel({ active, status }: { active: boolean; status: string }) {
+  const { scene } = useGLTF('/rotary_kiln.glb')
+  const cloned = scene.clone()
+  applyEmissive(cloned, active, status)
+  return <primitive object={cloned} />
+}
+
+function HammerMillModel({ active, status }: { active: boolean; status: string }) {
+  const { scene } = useGLTF('/hammer%20mill.glb')
   const cloned = scene.clone()
   applyEmissive(cloned, active, status)
   return <primitive object={cloned} />
@@ -199,17 +222,8 @@ export function Phase1Equipment() {
     return () => canvas.removeEventListener('wheel', onWheel)
   }, [hovered, transforms, setScale])
 
-  // Animaciones geométricas
-  const kilnRef    = useRef<Mesh>(null)
-  const scinfinRef = useRef<Mesh>(null)
-  useFrame((_, delta) => {
-    if (kilnRef.current    && equipment.rotary_kiln.active)    kilnRef.current.rotation.z    += delta * 0.5
-    if (scinfinRef.current && equipment.screw_conveyor.active) scinfinRef.current.rotation.x += delta * 2
-  })
-
-  const scinfinColor = geoColor(equipment.screw_conveyor.active, equipment.screw_conveyor.status)
-  const kilnColor    = geoColor(equipment.rotary_kiln.active,    equipment.rotary_kiln.status,  sensors.kilnTemp)
-  const millColor    = geoColor(equipment.hammer_mill.active,    equipment.hammer_mill.status)
+  // Sin geometrías animadas — todos los modelos son GLB
+  useFrame(() => {})
 
   const TIPS: Record<string, { title: string; model: string; specs: string; extra?: string }> = {
     marmita:       { title: 'Marmita Industrial',   model: 'Jersa/Vulcano MV-300', specs: '300 L · 12 kW · AISI-304 · 150°C' },
@@ -276,24 +290,12 @@ export function Phase1Equipment() {
       </DraggableMachine>
 
       <DraggableMachine {...dm('screw_conveyor')}>
-        <mesh castShadow>
-          <boxGeometry args={[3.5, 0.35, 0.35]} />
-          <meshStandardMaterial color={scinfinColor} metalness={0.5} roughness={0.5}
-            emissive={equipment.screw_conveyor.active ? scinfinColor : '#000'} emissiveIntensity={0.1} />
-        </mesh>
-        <mesh ref={scinfinRef}>
-          <cylinderGeometry args={[0.1, 0.1, 3.4, 8]} />
-          <meshStandardMaterial color="#6b7280" metalness={0.8} roughness={0.2} />
-        </mesh>
+        <ScrewConveyorModel active={equipment.screw_conveyor.active} status={equipment.screw_conveyor.status} />
         <Tooltip id="screw_conveyor" />
       </DraggableMachine>
 
       <DraggableMachine {...dm('rotary_kiln')}>
-        <mesh ref={kilnRef} castShadow rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.8, 0.8, 4, 24]} />
-          <meshStandardMaterial color={kilnColor} metalness={0.8} roughness={0.2}
-            emissive={equipment.rotary_kiln.active ? kilnColor : '#000'} emissiveIntensity={0.3} />
-        </mesh>
+        <RotaryKilnModel active={equipment.rotary_kiln.active} status={equipment.rotary_kiln.status} />
         {equipment.rotary_kiln.active && sensors.kilnTemp > 200 && (
           <pointLight position={[0,0,0]} intensity={1.2} color="#f97316" distance={6} />
         )}
@@ -301,15 +303,7 @@ export function Phase1Equipment() {
       </DraggableMachine>
 
       <DraggableMachine {...dm('hammer_mill')}>
-        <mesh castShadow>
-          <boxGeometry args={[1.2, 1.2, 1.2]} />
-          <meshStandardMaterial color={millColor} metalness={0.6} roughness={0.4}
-            emissive={equipment.hammer_mill.active ? millColor : '#000'} emissiveIntensity={0.15} />
-        </mesh>
-        <mesh position={[0, 1.1, 0]}>
-          <coneGeometry args={[0.5, 0.7, 8]} />
-          <meshStandardMaterial color="#4b5563" metalness={0.5} roughness={0.5} />
-        </mesh>
+        <HammerMillModel active={equipment.hammer_mill.active} status={equipment.hammer_mill.status} />
         <Tooltip id="hammer_mill" />
       </DraggableMachine>
     </group>
