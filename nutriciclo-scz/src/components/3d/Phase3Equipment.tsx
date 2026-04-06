@@ -50,7 +50,7 @@ export function Phase3Equipment() {
   }
 
   return (
-    <group position={[10, 0, 0]}>
+    <group position={[16, 0, 0]}>
       {/* Título siempre visible */}
       <Text position={[3.5, 3.8, 0]} fontSize={0.4} color="#86efac" anchorX="center">
         FASE 3 — Fraguado

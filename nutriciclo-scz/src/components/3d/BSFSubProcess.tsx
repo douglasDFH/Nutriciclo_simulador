@@ -37,7 +37,7 @@ export function BSFSubProcess() {
   }
 
   return (
-    <group position={[-2, 0, -8]}>
+    <group position={[-4, 0, -18]}>
       {/* Título siempre visible */}
       <Text position={[3.5, 3.2, 0]} fontSize={0.35} color="#a3e635" anchorX="center">
         SUB-PROCESO — Harina BSF (Hermetia illucens)

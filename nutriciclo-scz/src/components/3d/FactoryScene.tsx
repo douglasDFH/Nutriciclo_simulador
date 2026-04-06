@@ -13,15 +13,15 @@ import { clsx } from 'clsx'
 
 // Posición central de cada fase para enfocar la cámara
 const PHASE_CAMERA_TARGET: Record<string, [number, number, number]> = {
-  phase1:  [-8,  0, 0],
-  phase2:  [4,   0, 0],
-  phase3:  [16,  0, 0],
-  subproc: [0,   0, -8],
+  phase1:  [-18, 0,   0],   // grupo en -24, máquinas hasta -12 → centro -18
+  phase2:  [2,   0,   0],   // grupo en -4,  máquinas hasta +8  → centro  2
+  phase3:  [22,  0,   0],   // grupo en +16, máquinas hasta +28 → centro 22
+  subproc: [1,   0, -14],   // grupo en -4,  máquinas hasta +6, z=-18 → centro
 }
 
 function SceneContent({ selectedPhase }: { selectedPhase: PhaseId | null }) {
   const show = (phase: PhaseId) => selectedPhase === null || selectedPhase === phase
-  const target = selectedPhase ? PHASE_CAMERA_TARGET[selectedPhase] : ([4, 0, 0] as [number, number, number])
+  const target = selectedPhase ? PHASE_CAMERA_TARGET[selectedPhase] : ([2, 0, 0] as [number, number, number])
 
   return (
     <>
@@ -74,7 +74,7 @@ export function FactoryScene() {
     <div className="w-full h-full relative">
       <Canvas
         shadows
-        camera={{ position: [4, 16, 30], fov: 55 }}
+        camera={{ position: [2, 28, 55], fov: 60 }}
         style={{ background: darkMode ? '#030712' : '#0f172a' }}
         gl={{ antialias: true }}
       >
