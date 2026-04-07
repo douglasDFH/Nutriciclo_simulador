@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Text, Html, useGLTF } from '@react-three/drei'
+import { Html, useGLTF } from '@react-three/drei'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
 import { use3DStore } from '../../store/use3DStore'
 import { DraggableMachine, FlowArrow } from './SceneHelpers'
@@ -153,17 +153,19 @@ export function Phase1Equipment() {
     <group position={[-24, 0, 0]}>
 
       {/* ── Título ─────────────────────────────────────────────────────────── */}
-      <Text position={[5, 4.2, 0]} fontSize={0.38} color="#fca5a5" anchorX="center">
-        FASE 1 — Preparación Intensiva
-      </Text>
+      <Html position={[5, 4.2, 0]} center>
+        <div style={{ color: '#fca5a5', fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 3px #000' }}>
+          FASE 1 — Preparación Intensiva
+        </div>
+      </Html>
 
       {/* ── Etiquetas de línea ─────────────────────────────────────────────── */}
-      <Text position={[-1.2, 0.8, 3]} fontSize={0.22} color="#f87171" anchorX="center" rotation={[0, 0, 0]}>
-        🩸 Línea Sangre
-      </Text>
-      <Text position={[-1.2, 0.8, -3]} fontSize={0.22} color="#fbbf24" anchorX="center">
-        🦴 Línea Huesos
-      </Text>
+      <Html position={[-1.2, 0.8, 3]} center>
+        <div style={{ color: '#f87171', fontSize: 10, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 2px #000' }}>🩸 Línea Sangre</div>
+      </Html>
+      <Html position={[-1.2, 0.8, -3]} center>
+        <div style={{ color: '#fbbf24', fontSize: 10, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 2px #000' }}>🦴 Línea Huesos</div>
+      </Html>
 
       {/* ── Flechas de flujo — Línea Sangre (z=+3) ─────────────────────────── */}
       {/* Marmita → Secador */}
@@ -178,12 +180,11 @@ export function Phase1Equipment() {
       <FlowArrow from={[6.8, 0.1, -3]} to={[9.2, 0.1, -0.6]} color={equipment.rotary_kiln.active ? '#f97316' : '#374151'} active={equipment.rotary_kiln.active} />
 
       {/* ── Etiqueta salida ────────────────────────────────────────────────── */}
-      <Text position={[11.5, 0.8, 0]} fontSize={0.2} color={flourFlow ? '#4ade80' : '#374151'} anchorX="center">
-        Harinas →
-      </Text>
-      <Text position={[11.5, 0.4, 0]} fontSize={0.16} color="#6b7280" anchorX="center">
-        Fase 2
-      </Text>
+      <Html position={[11.5, 0.8, 0]} center>
+        <div style={{ color: flourFlow ? '#4ade80' : '#6b7280', fontSize: 10, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 2px #000' }}>
+          Harinas → Fase 2
+        </div>
+      </Html>
 
       {/* ── Máquinas ───────────────────────────────────────────────────────── */}
 

@@ -99,6 +99,11 @@ const INITIAL_EQUIPMENT: Record<EquipmentId, Equipment> = {
     model: 'WLDH-2000', manufacturer: 'Huaxin / ACME WZ Series',
     specs: { capacity: '1–5 t/lote', power: '45 kW', material: 'Acero carbono + recubrimiento', notes: 'Doble eje con paletas ajustables. Tiempo de mezcla 3–8 min. Descarga rápida. Incorporación de sólidos a la mezcla húmeda.' },
   },
+  paddle_mixer_2: {
+    id: 'paddle_mixer_2', name: 'Mezcladora Paletas Doble Eje #2', phase: 'phase3', status: 'inactive', active: false,
+    model: 'WLDH-2000 #2', manufacturer: 'Huaxin / ACME WZ Series',
+    specs: { capacity: '1–5 t/lote', power: '45 kW', material: 'Acero carbono + recubrimiento', notes: 'Segunda unidad. Doble eje con paletas ajustables. Tiempo de mezcla 3–8 min. Descarga rápida. Línea paralela de producción.' },
+  },
   lime_dosifier: {
     id: 'lime_dosifier', name: 'Dosificador de Cal Viva', phase: 'phase3', status: 'inactive', active: false,
     model: 'K-ML-D5-KT20', manufacturer: 'Schenck Process / K-Tron (Coperion)',

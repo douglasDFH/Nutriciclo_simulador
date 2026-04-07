@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Text, Html, useGLTF } from '@react-three/drei'
+import { Html, useGLTF } from '@react-three/drei'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
 import { use3DStore } from '../../store/use3DStore'
 import { DraggableMachine, FlowArrow } from './SceneHelpers'
@@ -142,17 +142,19 @@ export function Phase2Equipment() {
     <group position={[-4, 0, 0]}>
 
       {/* ── Título ─────────────────────────────────────────────────────────── */}
-      <Text position={[5, 4.2, 0]} fontSize={0.38} color="#93c5fd" anchorX="center">
-        FASE 2 — Mezcla Húmeda
-      </Text>
+      <Html position={[5, 4.2, 0]} center>
+        <div style={{ color: '#93c5fd', fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 3px #000' }}>
+          FASE 2 — Mezcla Húmeda
+        </div>
+      </Html>
 
       {/* ── Etiquetas de línea ─────────────────────────────────────────────── */}
-      <Text position={[-1.2, 0.8,  3]} fontSize={0.22} color="#fbbf24" anchorX="center">
-        🍯 Línea Melaza
-      </Text>
-      <Text position={[-1.2, 0.8, -3]} fontSize={0.22} color="#38bdf8" anchorX="center">
-        💧 Línea Disolución
-      </Text>
+      <Html position={[-1.2, 0.8, 3]} center>
+        <div style={{ color: '#fbbf24', fontSize: 10, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 2px #000' }}>🍯 Línea Melaza</div>
+      </Html>
+      <Html position={[-1.2, 0.8, -3]} center>
+        <div style={{ color: '#38bdf8', fontSize: 10, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 2px #000' }}>💧 Línea Disolución</div>
+      </Html>
 
       {/* ── Flechas de flujo ───────────────────────────────────────────────── */}
       {/* Melaza: Tanque → Bomba Peristáltica */}
@@ -170,12 +172,11 @@ export function Phase2Equipment() {
         color={eq.transfer_pump.active ? '#0ea5e9' : '#374151'} active={eq.transfer_pump.active} />
 
       {/* ── Salida ─────────────────────────────────────────────────────────── */}
-      <Text position={[12.5, 0.8, 0]} fontSize={0.2} color={mixerActive ? '#4ade80' : '#374151'} anchorX="center">
-        Mezcla →
-      </Text>
-      <Text position={[12.5, 0.4, 0]} fontSize={0.16} color="#6b7280" anchorX="center">
-        Fase 3
-      </Text>
+      <Html position={[12.5, 0.8, 0]} center>
+        <div style={{ color: mixerActive ? '#4ade80' : '#6b7280', fontSize: 10, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 2px #000' }}>
+          Mezcla → Fase 3
+        </div>
+      </Html>
 
       {/* ── Línea Melaza (z = +3) ──────────────────────────────────────────── */}
       <DraggableMachine {...dm('molasses_tank')}>

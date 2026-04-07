@@ -15,6 +15,7 @@ export type EquipmentId =
   | 'ribbon_mixer'
   // Fase 3 — Fraguado
   | 'paddle_mixer'
+  | 'paddle_mixer_2'
   | 'lime_dosifier'
   | 'vibrating_table'
   | 'belt_conveyor'

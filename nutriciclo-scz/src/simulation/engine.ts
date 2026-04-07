@@ -135,7 +135,7 @@ export function simulationStep(
   const ribbonMixerActive = activeEquipment.has('ribbon_mixer')
   const pumpActive        = activeEquipment.has('peristaltic_pump')
   const limeActive        = activeEquipment.has('lime_dosifier')
-  const paddleMixerActive = activeEquipment.has('paddle_mixer')
+  const paddleMixerActive = activeEquipment.has('paddle_mixer') || activeEquipment.has('paddle_mixer_2')
   const marmitaActive     = activeEquipment.has('marmita')
   const millActive        = activeEquipment.has('hammer_mill')
   const bioreactorActive  = activeEquipment.has('bsf_bioreactor')

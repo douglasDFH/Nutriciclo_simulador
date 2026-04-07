@@ -28,11 +28,12 @@ const DEFAULTS: Record<string, MachineTransform> = {
   transfer_pump:    { position: [9,  0, 0], rotation: [0, 0, 0], scale: 1 },
   ribbon_mixer:     { position: [12, 0, 0], rotation: [0, 0, 0], scale: 1 },
   // Fase 3
-  paddle_mixer:    { position: [0,  0, 0], rotation: [0, 0, 0], scale: 1 },
-  lime_dosifier:   { position: [3,  0, 0], rotation: [0, 0, 0], scale: 1 },
-  vibrating_table: { position: [6,  0, 0], rotation: [0, 0, 0], scale: 1 },
-  belt_conveyor:   { position: [9,  0, 0], rotation: [0, 0, 0], scale: 1 },
-  ventilation:     { position: [12, 0, 0], rotation: [0, 0, 0], scale: 1 },
+  paddle_mixer:    { position: [0,  0,  3], rotation: [0, 0, 0], scale: 1 },
+  paddle_mixer_2:  { position: [0,  0, -3], rotation: [0, 0, 0], scale: 1 },
+  lime_dosifier:   { position: [4,  0,  0], rotation: [0, 0, 0], scale: 1 },
+  vibrating_table: { position: [8,  0,  0], rotation: [0, 0, 0], scale: 1 },
+  belt_conveyor:   { position: [12, 0,  0], rotation: [0, 0, 0], scale: 1 },
+  ventilation:     { position: [4,  3,  0], rotation: [0, 0, 0], scale: 1 },
   // Sub-proceso BSF
   bsf_bioreactor: { position: [0, 0, 0], rotation: [0, 0, 0], scale: 1 },
   bsf_dryer:      { position: [4, 0, 0], rotation: [0, 0, 0], scale: 1 },
@@ -80,7 +81,7 @@ export const use3DStore = create<Store3D>()(
         })),
     }),
     {
-      name: 'nutriciclo-3d-transforms-v4', // bump → invierte orientación transportador
+      name: 'nutriciclo-3d-transforms-v5', // bump → agrega paddle_mixer_2 fase 3
       // Solo persistir transforms, no las funciones
       partialize: (state) => ({ transforms: state.transforms }),
       // Si hay máquinas nuevas en DEFAULTS que no están en el storage, las agrega

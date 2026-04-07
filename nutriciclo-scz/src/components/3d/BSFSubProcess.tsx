@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useFrame } from "@react-three/fiber"
 import type { ThreeEvent } from '@react-three/fiber'
-import { Text, Html } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import type { Mesh } from 'three'
 import { useSimulatorStore } from '../../store/useSimulatorStore'
 
@@ -39,9 +39,11 @@ export function BSFSubProcess() {
   return (
     <group position={[-4, 0, -18]}>
       {/* Título siempre visible */}
-      <Text position={[3.5, 3.2, 0]} fontSize={0.35} color="#a3e635" anchorX="center">
-        SUB-PROCESO — Harina BSF (Hermetia illucens)
-      </Text>
+      <Html position={[3.5, 3.2, 0]} center>
+        <div style={{ color: '#a3e635', fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 1px 3px #000' }}>
+          SUB-PROCESO — Harina BSF (Hermetia illucens)
+        </div>
+      </Html>
 
       {[0, 1, 2, 3, 4, 5, 6].map((i) => (
         <mesh key={i} position={[3.5, -0.8, i * 1.1 + 0.5]}>

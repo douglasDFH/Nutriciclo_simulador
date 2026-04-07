@@ -1,6 +1,20 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment, Grid } from '@react-three/drei'
-import { Suspense, useState } from 'react'
+import { OrbitControls, Grid } from '@react-three/drei'
+import { Suspense, useState, Component } from 'react'
+import type { ReactNode } from 'react'
+
+// ── ErrorBoundary para evitar que un error de GLB crashee todo el Canvas ──────
+class SceneErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    if (this.state.hasError) return null
+    return this.props.children
+  }
+}
 import { Phase1Equipment } from './Phase1Equipment'
 import { Phase2Equipment } from './Phase2Equipment'
 import { Phase3Equipment } from './Phase3Equipment'
@@ -25,8 +39,9 @@ function SceneContent({ selectedPhase, darkMode }: { selectedPhase: PhaseId | nu
 
   return (
     <>
-      <ambientLight intensity={darkMode ? 0.3 : 0.8} />
-      <directionalLight position={[10, 10, 5]} intensity={darkMode ? 1 : 1.4} castShadow />
+      <ambientLight intensity={darkMode ? 0.6 : 0.9} />
+      <directionalLight position={[10, 10, 5]} intensity={darkMode ? 1.5 : 1.8} castShadow />
+      <directionalLight position={[-10, 8, -5]} intensity={darkMode ? 0.4 : 0.6} />
       <pointLight position={[-5, 5, -5]} intensity={darkMode ? 0.5 : 0.3} color="#4ade80" />
       <pointLight position={[0, 4, -10]} intensity={darkMode ? 0.3 : 0.2} color="#a3e635" />
 
@@ -49,13 +64,13 @@ function SceneContent({ selectedPhase, darkMode }: { selectedPhase: PhaseId | nu
       />
 
       {/* Mostrar solo la fase seleccionada (o todas si ninguna está seleccionada) */}
-      {show('phase1')  && <Phase1Equipment />}
-      {show('phase2')  && <Phase2Equipment />}
-      {show('phase3')  && <Phase3Equipment />}
-      {show('subproc') && <BSFSubProcess />}
+      {show('phase1')  && <SceneErrorBoundary><Suspense fallback={null}><Phase1Equipment /></Suspense></SceneErrorBoundary>}
+      {show('phase2')  && <SceneErrorBoundary><Suspense fallback={null}><Phase2Equipment /></Suspense></SceneErrorBoundary>}
+      {show('phase3')  && <SceneErrorBoundary><Suspense fallback={null}><Phase3Equipment /></Suspense></SceneErrorBoundary>}
+      {show('subproc') && <SceneErrorBoundary><Suspense fallback={null}><BSFSubProcess /></Suspense></SceneErrorBoundary>}
 
       {/* Flujo de materiales solo en vista completa */}
-      {selectedPhase === null && <MaterialFlow />}
+      {selectedPhase === null && <SceneErrorBoundary><Suspense fallback={null}><MaterialFlow /></Suspense></SceneErrorBoundary>}
 
       <OrbitControls
         makeDefault
@@ -65,7 +80,6 @@ function SceneContent({ selectedPhase, darkMode }: { selectedPhase: PhaseId | nu
         maxDistance={70}
         target={target}
       />
-      <Environment preset={darkMode ? 'night' : 'warehouse'} />
     </>
   )
 }
@@ -86,9 +100,11 @@ export function FactoryScene() {
         style={{ background: darkMode ? '#030712' : '#e8ecf0' }}
         gl={{ antialias: true }}
       >
-        <Suspense fallback={null}>
-          <SceneContent selectedPhase={selectedPhase} darkMode={darkMode} />
-        </Suspense>
+        <SceneErrorBoundary>
+          <Suspense fallback={null}>
+            <SceneContent selectedPhase={selectedPhase} darkMode={darkMode} />
+          </Suspense>
+        </SceneErrorBoundary>
       </Canvas>
 
       {/* Panel lateral de fase seleccionada */}
